@@ -1,17 +1,25 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Link, router, useNavigation } from "expo-router";
-import { signOut } from "firebase/auth";
+import {
+  deleteUser,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  signOut,
+} from "firebase/auth";
+import { deleteDoc, doc } from "firebase/firestore";
 import { useLayoutEffect, useState } from "react";
 import {
   Alert,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   View,
 } from "react-native";
-import { auth } from "../../lib/firebase";
+import { auth, db } from "../../lib/firebase";
 
 export default function SettingsScreen() {
   const navigation = useNavigation();
@@ -19,6 +27,9 @@ export default function SettingsScreen() {
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [locationAccess, setLocationAccess] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -31,6 +42,56 @@ export default function SettingsScreen() {
       headerTitleStyle: { fontWeight: "800" },
     });
   }, [navigation]);
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) {
+      Alert.alert("Required", "Please enter your password to confirm.");
+      return;
+    }
+
+    try {
+      setDeleting(true);
+
+      const currentUser = auth.currentUser;
+      if (!currentUser || !currentUser.email) return;
+
+      // Re-authenticate first — Firebase requires this before deletion
+      const credential = EmailAuthProvider.credential(
+        currentUser.email,
+        deletePassword,
+      );
+      await reauthenticateWithCredential(currentUser, credential);
+
+      // Delete user data from Firestore
+      await deleteDoc(doc(db, "users", currentUser.uid));
+
+      // Delete Firebase Auth account
+      await deleteUser(currentUser);
+
+      setShowDeleteModal(false);
+      setDeletePassword("");
+
+      Alert.alert(
+        "Account deleted",
+        "Your account has been permanently deleted.",
+        [{ text: "OK", onPress: () => router.replace("/welcome") }],
+      );
+    } catch (error: any) {
+      if (
+        error.code === "auth/wrong-password" ||
+        error.code === "auth/invalid-credential"
+      ) {
+        Alert.alert("Wrong password", "Please enter your correct password.");
+      } else if (error.code === "auth/too-many-requests") {
+        Alert.alert("Too many attempts", "Please try again later.");
+      } else {
+        Alert.alert("Error", "Could not delete account. Please try again.");
+        console.log("Delete account error:", error);
+      }
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <View style={styles.screen}>
@@ -108,20 +169,70 @@ export default function SettingsScreen() {
               ])
             }
           />
+
           <SettingButton
             icon="trash-outline"
             title="Delete Account"
-            subtitle="Remove account and team data"
+            subtitle="Permanently remove your account and data"
             danger
-            onPress={() =>
-              Alert.alert(
-                "Delete Account",
-                "Account deletion will be connected to Firebase later.",
-              )
-            }
+            onPress={() => setShowDeleteModal(true)}
           />
         </View>
       </ScrollView>
+
+      {/* Delete Account Modal */}
+      <Modal
+        visible={showDeleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalIconCircle}>
+              <Ionicons name="warning-outline" size={32} color="#FF4D4F" />
+            </View>
+
+            <Text style={styles.modalTitle}>Delete Account</Text>
+            <Text style={styles.modalText}>
+              This will permanently delete your account and all your data from
+              Firebase. This cannot be undone.
+            </Text>
+
+            <Text style={styles.modalLabel}>
+              Enter your password to confirm
+            </Text>
+            <TextInput
+              value={deletePassword}
+              onChangeText={setDeletePassword}
+              placeholder="Your password"
+              placeholderTextColor="#9A94A6"
+              secureTextEntry
+              style={styles.modalInput}
+            />
+
+            <Pressable
+              style={[styles.modalDeleteButton, deleting && { opacity: 0.6 }]}
+              onPress={handleDeleteAccount}
+              disabled={deleting}
+            >
+              <Text style={styles.modalDeleteButtonText}>
+                {deleting ? "Deleting..." : "Delete My Account"}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.modalCancelButton}
+              onPress={() => {
+                setShowDeleteModal(false);
+                setDeletePassword("");
+              }}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -250,5 +361,82 @@ const styles = StyleSheet.create({
   },
   dangerText: {
     color: "#FF4D4F",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  modalCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 26,
+    padding: 24,
+    width: "100%",
+    alignItems: "center",
+    gap: 12,
+  },
+  modalIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#FFEAEA",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#1D1828",
+  },
+  modalText: {
+    fontSize: 14,
+    color: "#6F687D",
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  modalLabel: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#1D1828",
+    alignSelf: "flex-start",
+  },
+  modalInput: {
+    width: "100%",
+    height: 50,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#EEEAFD",
+    backgroundColor: "#FBFAFF",
+    paddingHorizontal: 14,
+    fontSize: 14,
+    color: "#1D1828",
+  },
+  modalDeleteButton: {
+    width: "100%",
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: "#FF4D4F",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalDeleteButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  modalCancelButton: {
+    width: "100%",
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: "#F3F0FA",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalCancelText: {
+    color: "#5B2EEA",
+    fontSize: 15,
+    fontWeight: "800",
   },
 });
