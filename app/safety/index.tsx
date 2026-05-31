@@ -13,9 +13,11 @@ import {
   Text,
   View,
 } from "react-native";
+import { useTheme } from "../../lib/ThemeContext";
 
 export default function SafetyScreen() {
   const navigation = useNavigation();
+  const { colors } = useTheme();
 
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
   const [gpsEnabled, setGpsEnabled] = useState(false);
@@ -37,12 +39,12 @@ export default function SafetyScreen() {
       headerShown: true,
       title: "Activity Tools & Safety",
       headerBackTitle: "Back",
-      headerStyle: { backgroundColor: "#F7F4FF" },
+      headerStyle: { backgroundColor: colors.background },
       headerShadowVisible: false,
-      headerTintColor: "#1D1828",
+      headerTintColor: colors.text,
       headerTitleStyle: { fontWeight: "800" },
     });
-  }, [navigation]);
+  }, [navigation, colors]);
 
   useEffect(() => {
     getBattery();
@@ -51,13 +53,9 @@ export default function SafetyScreen() {
 
   useEffect(() => {
     let timer: ReturnType<typeof setInterval> | null = null;
-
     if (stopwatchRunning) {
-      timer = setInterval(() => {
-        setSeconds((prev) => prev + 1);
-      }, 1000);
+      timer = setInterval(() => setSeconds((prev) => prev + 1), 1000);
     }
-
     return () => {
       if (timer) clearInterval(timer);
     };
@@ -76,7 +74,6 @@ export default function SafetyScreen() {
   const toggleTorch = async () => {
     if (!permission?.granted) {
       const result = await requestPermission();
-
       if (!result.granted) {
         Alert.alert(
           "Camera permission required",
@@ -85,7 +82,6 @@ export default function SafetyScreen() {
         return;
       }
     }
-
     setShowTorch(true);
     setTorchEnabled((prev) => !prev);
   };
@@ -100,7 +96,6 @@ export default function SafetyScreen() {
     if (soundRunning) {
       if (soundTimerRef.current) clearInterval(soundTimerRef.current);
       soundTimerRef.current = null;
-
       await recordingRef.current?.stopAndUnloadAsync();
       recordingRef.current = null;
       setSoundRunning(false);
@@ -108,7 +103,6 @@ export default function SafetyScreen() {
     }
 
     const permissionResult = await Audio.requestPermissionsAsync();
-
     if (!permissionResult.granted) {
       Alert.alert(
         "Microphone permission required",
@@ -123,7 +117,6 @@ export default function SafetyScreen() {
     });
 
     const recording = new Audio.Recording();
-
     await recording.prepareToRecordAsync({
       android: {
         extension: ".m4a",
@@ -144,10 +137,7 @@ export default function SafetyScreen() {
         linearPCMIsBigEndian: false,
         linearPCMIsFloat: false,
       },
-      web: {
-        mimeType: "audio/webm",
-        bitsPerSecond: 128000,
-      },
+      web: { mimeType: "audio/webm", bitsPerSecond: 128000 },
       isMeteringEnabled: true,
     });
 
@@ -157,7 +147,6 @@ export default function SafetyScreen() {
 
     soundTimerRef.current = setInterval(async () => {
       const status = await recording.getStatusAsync();
-
       if ("metering" in status && typeof status.metering === "number") {
         const normalized = Math.max(
           0,
@@ -169,64 +158,79 @@ export default function SafetyScreen() {
   };
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.sectionTitle}>Device Status</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          Device Status
+        </Text>
 
         <View style={styles.statusRow}>
-          <View style={styles.statusCard}>
+          <View style={[styles.statusCard, { backgroundColor: colors.card }]}>
             <Ionicons name="battery-half" size={34} color="#25B46B" />
-            <Text style={styles.statusLabel}>Battery</Text>
-            <Text style={styles.statusValue}>
+            <Text style={[styles.statusLabel, { color: colors.subtext }]}>
+              Battery
+            </Text>
+            <Text style={[styles.statusValue, { color: colors.text }]}>
               {batteryLevel !== null ? `${batteryLevel}%` : "--"}
             </Text>
           </View>
 
-          <View style={styles.statusCard}>
+          <View style={[styles.statusCard, { backgroundColor: colors.card }]}>
             <Ionicons name="location" size={34} color="#25B46B" />
-            <Text style={styles.statusLabel}>GPS</Text>
-            <Text style={styles.statusValue}>{gpsEnabled ? "On" : "Off"}</Text>
+            <Text style={[styles.statusLabel, { color: colors.subtext }]}>
+              GPS
+            </Text>
+            <Text style={[styles.statusValue, { color: colors.text }]}>
+              {gpsEnabled ? "On" : "Off"}
+            </Text>
           </View>
 
-          <View style={styles.statusCard}>
+          <View style={[styles.statusCard, { backgroundColor: colors.card }]}>
             <Ionicons name="mic" size={34} color="#3B82F6" />
-            <Text style={styles.statusLabel}>Sound</Text>
-            <Text style={styles.statusValue}>
+            <Text style={[styles.statusLabel, { color: colors.subtext }]}>
+              Sound
+            </Text>
+            <Text style={[styles.statusValue, { color: colors.text }]}>
               {soundLevel !== null ? `${soundLevel}` : "--"}
             </Text>
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Quick Tools</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          Quick Tools
+        </Text>
 
-        <View style={styles.toolsCard}>
-          <Pressable style={styles.toolRow} onPress={toggleTorch}>
+        <View style={[styles.toolsCard, { backgroundColor: colors.card }]}>
+          <Pressable
+            style={[styles.toolRow, { borderBottomColor: colors.border }]}
+            onPress={toggleTorch}
+          >
             <View style={[styles.toolIcon, { backgroundColor: "#EEE5FF" }]}>
               <Ionicons name="flashlight" size={24} color="#6C3DEB" />
             </View>
-
             <View style={styles.toolTextWrap}>
-              <Text style={styles.toolTitle}>Torch</Text>
-              <Text style={styles.toolSubtitle}>
+              <Text style={[styles.toolTitle, { color: colors.text }]}>
+                Torch
+              </Text>
+              <Text style={[styles.toolSubtitle, { color: colors.subtext }]}>
                 {torchEnabled ? "Flashlight is on" : "Turn on flashlight"}
               </Text>
             </View>
-
-            <Feather name="chevron-right" size={22} color="#8C8796" />
+            <Feather name="chevron-right" size={22} color={colors.subtext} />
           </Pressable>
 
-          <View style={styles.toolRow}>
+          <View style={[styles.toolRow, { borderBottomColor: colors.border }]}>
             <View style={[styles.toolIcon, { backgroundColor: "#FFF1DD" }]}>
               <Ionicons name="timer" size={24} color="#FF9F1C" />
             </View>
-
             <View style={styles.toolTextWrap}>
-              <Text style={styles.toolTitle}>Stopwatch</Text>
-              <Text style={styles.toolSubtitle}>
+              <Text style={[styles.toolTitle, { color: colors.text }]}>
+                Stopwatch
+              </Text>
+              <Text style={[styles.toolSubtitle, { color: colors.subtext }]}>
                 Time: {formatTime(seconds)}
               </Text>
             </View>
-
             <Pressable
               style={styles.smallButton}
               onPress={() => setStopwatchRunning((prev) => !prev)}
@@ -235,7 +239,6 @@ export default function SafetyScreen() {
                 {stopwatchRunning ? "Pause" : "Start"}
               </Text>
             </Pressable>
-
             <Pressable
               style={[styles.smallButton, styles.resetButton]}
               onPress={() => {
@@ -247,7 +250,10 @@ export default function SafetyScreen() {
             </Pressable>
           </View>
 
-          <Pressable style={styles.toolRow} onPress={toggleSoundMeter}>
+          <Pressable
+            style={[styles.toolRow, { borderBottomColor: colors.border }]}
+            onPress={toggleSoundMeter}
+          >
             <View style={[styles.toolIcon, { backgroundColor: "#E7FFF0" }]}>
               <MaterialCommunityIcons
                 name="waveform"
@@ -255,17 +261,17 @@ export default function SafetyScreen() {
                 color="#25B46B"
               />
             </View>
-
             <View style={styles.toolTextWrap}>
-              <Text style={styles.toolTitle}>Sound Meter</Text>
-              <Text style={styles.toolSubtitle}>
+              <Text style={[styles.toolTitle, { color: colors.text }]}>
+                Sound Meter
+              </Text>
+              <Text style={[styles.toolSubtitle, { color: colors.subtext }]}>
                 {soundRunning
                   ? `Listening... level ${soundLevel ?? "--"}`
                   : "Tap to measure sound level"}
               </Text>
             </View>
-
-            <Feather name="chevron-right" size={22} color="#8C8796" />
+            <Feather name="chevron-right" size={22} color={colors.subtext} />
           </Pressable>
         </View>
       </ScrollView>
@@ -284,18 +290,11 @@ export default function SafetyScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#F7F4FF",
-  },
-  content: {
-    padding: 18,
-    paddingBottom: 40,
-  },
+  screen: { flex: 1 },
+  content: { padding: 18, paddingBottom: 40 },
   sectionTitle: {
     fontSize: 20,
     fontWeight: "800",
-    color: "#1D1828",
     marginBottom: 14,
   },
   statusRow: {
@@ -305,7 +304,6 @@ const styles = StyleSheet.create({
   },
   statusCard: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
     borderRadius: 22,
     paddingVertical: 22,
     alignItems: "center",
@@ -316,18 +314,15 @@ const styles = StyleSheet.create({
   },
   statusLabel: {
     fontSize: 13,
-    color: "#6F687D",
     marginTop: 10,
     fontWeight: "700",
   },
   statusValue: {
     fontSize: 20,
     fontWeight: "900",
-    color: "#1D1828",
     marginTop: 5,
   },
   toolsCard: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     overflow: "hidden",
     marginBottom: 24,
@@ -337,7 +332,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 18,
     borderBottomWidth: 1,
-    borderBottomColor: "#F1EEFA",
   },
   toolIcon: {
     width: 52,
@@ -347,17 +341,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 14,
   },
-  toolTextWrap: {
-    flex: 1,
-  },
+  toolTextWrap: { flex: 1 },
   toolTitle: {
     fontSize: 16,
     fontWeight: "800",
-    color: "#1D1828",
   },
   toolSubtitle: {
     fontSize: 13,
-    color: "#7A7288",
     marginTop: 3,
   },
   smallButton: {
@@ -373,9 +363,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "800",
   },
-  resetButton: {
-    backgroundColor: "#F1EEFA",
-  },
+  resetButton: { backgroundColor: "#F1EEFA" },
   resetButtonText: {
     color: "#5B2EEA",
     fontSize: 12,

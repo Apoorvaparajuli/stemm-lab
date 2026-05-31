@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { db } from "../../../../lib/firebase";
+import { useTheme } from "../../../../lib/ThemeContext";
 
 type Challenge = {
   id: string;
@@ -27,8 +28,17 @@ type Challenge = {
   tasks?: string[];
 };
 
+type ThemeColors = {
+  background: string;
+  card: string;
+  text: string;
+  subtext: string;
+  border: string;
+  input: string; // ← add this
+};
+
 // ─── Reaction Board Tool ───────────────────────────────────────────────────
-function ReactionBoardTool() {
+function ReactionBoardTool({ colors }: { colors: ThemeColors }) {
   const [phase, setPhase] = useState<"waiting" | "ready" | "tap" | "result">(
     "waiting",
   );
@@ -70,7 +80,9 @@ function ReactionBoardTool() {
 
   return (
     <View style={styles.toolSection}>
-      <Text style={styles.sectionTitle}>Reaction Board</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>
+        Reaction Board
+      </Text>
 
       <Pressable
         style={[styles.reactionBox, { backgroundColor: bgColor }]}
@@ -102,16 +114,24 @@ function ReactionBoardTool() {
       </Pressable>
 
       {results.length > 0 && (
-        <View style={styles.resultsCard}>
-          <Text style={styles.resultsTitle}>Results</Text>
+        <View style={[styles.resultsCard, { backgroundColor: colors.card }]}>
+          <Text style={[styles.resultsTitle, { color: colors.text }]}>
+            Results
+          </Text>
           {results.map((r, i) => (
             <View key={i} style={styles.resultRow}>
-              <Text style={styles.resultLabel}>Attempt {i + 1}</Text>
-              <Text style={styles.resultValue}>{r} ms</Text>
+              <Text style={[styles.resultLabel, { color: colors.subtext }]}>
+                Attempt {i + 1}
+              </Text>
+              <Text style={[styles.resultValue, { color: colors.text }]}>
+                {r} ms
+              </Text>
             </View>
           ))}
           {avg !== null && (
-            <View style={[styles.resultRow, styles.resultAvgRow]}>
+            <View
+              style={[styles.resultAvgRow, { borderTopColor: colors.border }]}
+            >
               <Text style={styles.resultAvgLabel}>Average</Text>
               <Text style={styles.resultAvgValue}>{avg} ms</Text>
             </View>
@@ -123,7 +143,7 @@ function ReactionBoardTool() {
 }
 
 // ─── Accelerometer Tool ────────────────────────────────────────────────────
-function AccelerometerTool() {
+function AccelerometerTool({ colors }: { colors: ThemeColors }) {
   const [data, setData] = useState({ x: 0, y: 0, z: 0 });
   const [recording, setRecording] = useState(false);
   const [peak, setPeak] = useState(0);
@@ -163,13 +183,20 @@ function AccelerometerTool() {
 
   return (
     <View style={styles.toolSection}>
-      <Text style={styles.sectionTitle}>Accelerometer</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>
+        Accelerometer
+      </Text>
 
-      <View style={styles.accelCard}>
+      <View style={[styles.accelCard, { backgroundColor: colors.card }]}>
         <View style={styles.accelMagRow}>
-          <Text style={styles.accelMagValue}>{magnitude.toFixed(2)}</Text>
-          <Text style={styles.accelMagUnit}>m/s²</Text>
+          <Text style={[styles.accelMagValue, { color: colors.text }]}>
+            {magnitude.toFixed(2)}
+          </Text>
+          <Text style={[styles.accelMagUnit, { color: colors.subtext }]}>
+            m/s²
+          </Text>
         </View>
+
         <View style={[styles.shakeBadge, { backgroundColor: `${color}18` }]}>
           <Text style={[styles.shakeLabel, { color }]}>{label}</Text>
         </View>
@@ -177,8 +204,12 @@ function AccelerometerTool() {
         <View style={styles.accelAxes}>
           {(["x", "y", "z"] as const).map((axis) => (
             <View key={axis} style={styles.axisRow}>
-              <Text style={styles.axisLabel}>{axis.toUpperCase()}</Text>
-              <Text style={styles.axisValue}>{data[axis].toFixed(3)}</Text>
+              <Text style={[styles.axisLabel, { color: colors.subtext }]}>
+                {axis.toUpperCase()}
+              </Text>
+              <Text style={[styles.axisValue, { color: colors.text }]}>
+                {data[axis].toFixed(3)}
+              </Text>
             </View>
           ))}
         </View>
@@ -204,6 +235,7 @@ function AccelerometerTool() {
 export default function ChallengeDetailsScreen() {
   const navigation = useNavigation();
   const { id } = useLocalSearchParams();
+  const { colors } = useTheme();
 
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [loading, setLoading] = useState(true);
@@ -213,17 +245,17 @@ export default function ChallengeDetailsScreen() {
       headerShown: true,
       title: "Challenge Details",
       headerBackTitle: "Back",
-      headerStyle: { backgroundColor: "#F7F4FF" },
+      headerStyle: { backgroundColor: colors.background },
       headerShadowVisible: false,
-      headerTintColor: "#1D1828",
+      headerTintColor: colors.text,
       headerTitleStyle: { fontWeight: "800" },
       headerRight: () => (
         <Pressable style={styles.headerIcon}>
-          <Ionicons name="share-social-outline" size={20} color="#1D1828" />
+          <Ionicons name="share-social-outline" size={20} color={colors.text} />
         </Pressable>
       ),
     });
-  }, [navigation]);
+  }, [navigation, colors]);
 
   useEffect(() => {
     loadChallenge();
@@ -256,19 +288,35 @@ export default function ChallengeDetailsScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.screen, styles.center]}>
+      <View
+        style={[
+          styles.screen,
+          styles.center,
+          { backgroundColor: colors.background },
+        ]}
+      >
         <ActivityIndicator color="#5B2EEA" size="large" />
-        <Text style={styles.loadingText}>Loading challenge...</Text>
+        <Text style={[styles.loadingText, { color: colors.subtext }]}>
+          Loading challenge...
+        </Text>
       </View>
     );
   }
 
   if (!challenge) {
     return (
-      <View style={[styles.screen, styles.center]}>
+      <View
+        style={[
+          styles.screen,
+          styles.center,
+          { backgroundColor: colors.background },
+        ]}
+      >
         <Ionicons name="alert-circle-outline" size={44} color="#FF4D4F" />
-        <Text style={styles.errorTitle}>Challenge not found</Text>
-        <Text style={styles.errorText}>
+        <Text style={[styles.errorTitle, { color: colors.text }]}>
+          Challenge not found
+        </Text>
+        <Text style={[styles.errorText, { color: colors.subtext }]}>
           This challenge could not be loaded from Firebase.
         </Text>
       </View>
@@ -276,15 +324,14 @@ export default function ChallengeDetailsScreen() {
   }
 
   const tasks = challenge.tasks ?? [];
-
-  // Reaction Board = id "3", Earthquake = id "4"
   const showReaction = challenge.id === "3";
   const showAccelerometer = challenge.id === "4";
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.heroCard}>
+        {/* Hero Card */}
+        <View style={[styles.heroCard, { backgroundColor: colors.card }]}>
           <View
             style={[
               styles.heroIcon,
@@ -297,8 +344,12 @@ export default function ChallengeDetailsScreen() {
               color={challenge.color}
             />
           </View>
-          <Text style={styles.title}>{challenge.title}</Text>
-          <Text style={styles.description}>{challenge.description}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>
+            {challenge.title}
+          </Text>
+          <Text style={[styles.description, { color: colors.subtext }]}>
+            {challenge.description}
+          </Text>
           <View style={styles.badgeRow}>
             <View
               style={[
@@ -310,29 +361,42 @@ export default function ChallengeDetailsScreen() {
                 {challenge.priority} Priority
               </Text>
             </View>
-            <View style={styles.badge}>
-              <Text style={styles.secondaryBadgeText}>
+            <View
+              style={[styles.badge, { backgroundColor: colors.background }]}
+            >
+              <Text
+                style={[styles.secondaryBadgeText, { color: colors.subtext }]}
+              >
                 {challenge.difficulty ?? "Activity"}
               </Text>
             </View>
           </View>
         </View>
 
+        {/* Details Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Challenge Details</Text>
-          <View style={styles.infoCard}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Challenge Details
+          </Text>
+          <View style={[styles.infoCard, { backgroundColor: colors.card }]}>
             <View style={styles.infoRow}>
               <Ionicons name="calendar-outline" size={20} color="#5B2EEA" />
               <View>
-                <Text style={styles.infoLabel}>Due Date</Text>
-                <Text style={styles.infoValue}>{challenge.due}</Text>
+                <Text style={[styles.infoLabel, { color: colors.subtext }]}>
+                  Due Date
+                </Text>
+                <Text style={[styles.infoValue, { color: colors.text }]}>
+                  {challenge.due}
+                </Text>
               </View>
             </View>
             <View style={styles.infoRow}>
               <Ionicons name="layers-outline" size={20} color="#5B2EEA" />
               <View>
-                <Text style={styles.infoLabel}>Category</Text>
-                <Text style={styles.infoValue}>
+                <Text style={[styles.infoLabel, { color: colors.subtext }]}>
+                  Category
+                </Text>
+                <Text style={[styles.infoValue, { color: colors.text }]}>
                   {challenge.category ?? "STEMM Activity"}
                 </Text>
               </View>
@@ -340,8 +404,10 @@ export default function ChallengeDetailsScreen() {
             <View style={styles.infoRow}>
               <Ionicons name="school-outline" size={20} color="#5B2EEA" />
               <View>
-                <Text style={styles.infoLabel}>Difficulty</Text>
-                <Text style={styles.infoValue}>
+                <Text style={[styles.infoLabel, { color: colors.subtext }]}>
+                  Difficulty
+                </Text>
+                <Text style={[styles.infoValue, { color: colors.text }]}>
                   {challenge.difficulty ?? "Beginner"}
                 </Text>
               </View>
@@ -349,28 +415,33 @@ export default function ChallengeDetailsScreen() {
           </View>
         </View>
 
+        {/* Tasks Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Tasks</Text>
-          <View style={styles.tasksCard}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Tasks
+          </Text>
+          <View style={[styles.tasksCard, { backgroundColor: colors.card }]}>
             {tasks.length > 0 ? (
               tasks.map((task, index) => (
                 <View key={`${task}-${index}`} style={styles.taskRow}>
                   <View style={styles.taskCircle}>
                     <Text style={styles.taskNumber}>{index + 1}</Text>
                   </View>
-                  <Text style={styles.taskText}>{task}</Text>
+                  <Text style={[styles.taskText, { color: colors.text }]}>
+                    {task}
+                  </Text>
                 </View>
               ))
             ) : (
-              <Text style={styles.emptyText}>
+              <Text style={[styles.emptyText, { color: colors.subtext }]}>
                 No task steps found for this challenge yet.
               </Text>
             )}
           </View>
         </View>
 
-        {showReaction && <ReactionBoardTool />}
-        {showAccelerometer && <AccelerometerTool />}
+        {showReaction && <ReactionBoardTool colors={colors} />}
+        {showAccelerometer && <AccelerometerTool colors={colors} />}
       </ScrollView>
 
       <Link href="/tasks/add" asChild>
@@ -384,29 +455,25 @@ export default function ChallengeDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#F7F4FF" },
+  screen: { flex: 1 },
   center: { alignItems: "center", justifyContent: "center", padding: 24 },
   loadingText: {
     marginTop: 12,
     fontSize: 14,
     fontWeight: "700",
-    color: "#7A7288",
   },
   errorTitle: {
     marginTop: 12,
     fontSize: 20,
     fontWeight: "900",
-    color: "#1D1828",
   },
   errorText: {
     marginTop: 6,
     fontSize: 14,
-    color: "#7A7288",
     textAlign: "center",
   },
   emptyText: {
     fontSize: 14,
-    color: "#7A7288",
     fontWeight: "700",
     lineHeight: 20,
   },
@@ -419,7 +486,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   heroCard: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 28,
     padding: 24,
     alignItems: "center",
@@ -436,12 +502,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "800",
-    color: "#1D1828",
     textAlign: "center",
   },
   description: {
     fontSize: 14,
-    color: "#6F687D",
     textAlign: "center",
     lineHeight: 22,
     marginTop: 12,
@@ -451,33 +515,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
-    backgroundColor: "#F3F0FA",
   },
   badgeText: { fontSize: 12, fontWeight: "800" },
-  secondaryBadgeText: { fontSize: 12, fontWeight: "700", color: "#5F596B" },
+  secondaryBadgeText: { fontSize: 12, fontWeight: "700" },
   section: { marginBottom: 18 },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#1D1828",
     marginBottom: 12,
   },
   infoCard: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 22,
     padding: 18,
     gap: 18,
   },
   infoRow: { flexDirection: "row", gap: 14, alignItems: "center" },
-  infoLabel: { fontSize: 12, color: "#7A7288" },
+  infoLabel: { fontSize: 12 },
   infoValue: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#1D1828",
     marginTop: 2,
   },
   tasksCard: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 22,
     padding: 18,
     gap: 16,
@@ -492,7 +551,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   taskNumber: { color: "#FFFFFF", fontWeight: "800", fontSize: 13 },
-  taskText: { flex: 1, fontSize: 14, color: "#1D1828", fontWeight: "600" },
+  taskText: { flex: 1, fontSize: 14, fontWeight: "600" },
   submitButton: {
     position: "absolute",
     left: 18,
@@ -507,11 +566,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   submitButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "800" },
-
-  // Sensor tool shared
   toolSection: { marginBottom: 18 },
-
-  // Reaction Board
   reactionBox: {
     borderRadius: 24,
     padding: 36,
@@ -524,7 +579,6 @@ const styles = StyleSheet.create({
   reactionLabel: { fontSize: 22, fontWeight: "900", color: "#FFFFFF" },
   reactionSub: { fontSize: 13, color: "rgba(255,255,255,0.8)", marginTop: 8 },
   resultsCard: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 22,
     padding: 18,
     gap: 10,
@@ -532,38 +586,35 @@ const styles = StyleSheet.create({
   resultsTitle: {
     fontSize: 16,
     fontWeight: "800",
-    color: "#1D1828",
     marginBottom: 4,
   },
   resultRow: { flexDirection: "row", justifyContent: "space-between" },
-  resultLabel: { fontSize: 14, color: "#7A7288" },
-  resultValue: { fontSize: 14, fontWeight: "700", color: "#1D1828" },
+  resultLabel: { fontSize: 14 },
+  resultValue: { fontSize: 14, fontWeight: "700" },
   resultAvgRow: {
     borderTopWidth: 1,
-    borderTopColor: "#F0EDF8",
     paddingTop: 10,
     marginTop: 4,
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   resultAvgLabel: { fontSize: 14, fontWeight: "800", color: "#5B2EEA" },
   resultAvgValue: { fontSize: 14, fontWeight: "900", color: "#5B2EEA" },
-
-  // Accelerometer
   accelCard: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 22,
     padding: 18,
     alignItems: "center",
     gap: 14,
   },
   accelMagRow: { flexDirection: "row", alignItems: "baseline", gap: 6 },
-  accelMagValue: { fontSize: 48, fontWeight: "900", color: "#1D1828" },
-  accelMagUnit: { fontSize: 16, color: "#7A7288", fontWeight: "700" },
+  accelMagValue: { fontSize: 48, fontWeight: "900" },
+  accelMagUnit: { fontSize: 16, fontWeight: "700" },
   shakeBadge: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20 },
   shakeLabel: { fontSize: 13, fontWeight: "800" },
   accelAxes: { flexDirection: "row", gap: 20 },
   axisRow: { alignItems: "center", gap: 4 },
-  axisLabel: { fontSize: 12, fontWeight: "800", color: "#7A7288" },
-  axisValue: { fontSize: 14, fontWeight: "700", color: "#1D1828" },
+  axisLabel: { fontSize: 12, fontWeight: "800" },
+  axisValue: { fontSize: 14, fontWeight: "700" },
   peakText: { fontSize: 13, color: "#FF9F1C", fontWeight: "700" },
   accelButton: {
     width: "100%",

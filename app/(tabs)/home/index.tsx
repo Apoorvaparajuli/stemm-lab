@@ -12,8 +12,8 @@ import {
 
 import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
 import { auth, db } from "../../../lib/firebase";
+import { useTheme } from "../../../lib/ThemeContext";
 
-// Safe AdMob import — won't crash Expo Go
 let BannerAd: any = null;
 let BannerAdSize: any = null;
 let TestIds: any = null;
@@ -36,26 +36,30 @@ type Challenge = {
   status?: "To Do" | "Ongoing" | "Completed";
 };
 
-function GridButton({
-  href,
-  icon,
-  title,
-}: {
+// GridButton - add width: "100%" to inner View
+type GridButtonProps = {
   href: string;
   icon: React.ReactNode;
   title: string;
-}) {
+  cardBg: string;
+  textColor: string;
+};
+
+function GridButton({ href, icon, title, cardBg, textColor }: GridButtonProps) {
   return (
     <Link href={href as any} asChild>
-      <Pressable style={styles.gridCard}>
-        {icon}
-        <Text style={styles.gridText}>{title}</Text>
+      <Pressable style={styles.gridPressable}>
+        <View style={[styles.gridCard, { backgroundColor: cardBg }]}>
+          {icon}
+          <Text style={[styles.gridText, { color: textColor }]}>{title}</Text>
+        </View>
       </Pressable>
     </Link>
   );
 }
 
 export default function HomeScreen() {
+  const { colors } = useTheme();
   const [loading, setLoading] = useState(true);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [userName, setUserName] = useState("Student");
@@ -99,7 +103,10 @@ export default function HomeScreen() {
   );
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={[styles.screen, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.content}
+    >
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.smallText}>Welcome back,</Text>
@@ -111,15 +118,12 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* AdMob Banner - requires native build, safely skipped in Expo Go */}
       {BannerAd && BannerAdSize && TestIds && (
         <View style={styles.adContainer}>
           <BannerAd
             unitId={TestIds.BANNER}
             size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-            requestOptions={{
-              requestNonPersonalizedAdsOnly: true,
-            }}
+            requestOptions={{ requestNonPersonalizedAdsOnly: true }}
             onAdLoaded={() => console.log("AdMob banner loaded")}
             onAdFailedToLoad={(error: any) =>
               console.log("AdMob banner failed:", error)
@@ -128,9 +132,11 @@ export default function HomeScreen() {
         </View>
       )}
 
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: colors.card }]}>
         <View style={styles.rowBetween}>
-          <Text style={styles.sectionTitle}>Upcoming Challenges</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Upcoming Challenges
+          </Text>
           <Link href="/tasks" style={styles.viewAll}>
             View All
           </Link>
@@ -139,52 +145,72 @@ export default function HomeScreen() {
         {loading ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator color="#5B2EEA" />
-            <Text style={styles.loadingText}>Loading challenges...</Text>
+            <Text style={[styles.loadingText, { color: colors.subtext }]}>
+              Loading challenges...
+            </Text>
           </View>
         ) : visibleChallenges.length === 0 ? (
           <View style={styles.emptyBox}>
             <Ionicons name="document-text-outline" size={28} color="#9A94A6" />
-            <Text style={styles.emptyTitle}>No challenges yet</Text>
-            <Text style={styles.emptyText}>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              No challenges yet
+            </Text>
+            <Text style={[styles.emptyText, { color: colors.subtext }]}>
               Challenges from Firebase will appear here.
             </Text>
           </View>
         ) : (
           visibleChallenges.map((item) => (
             <Link key={item.id} href={`/tasks/${item.id}`} asChild>
-              <Pressable style={styles.challengeRow}>
+              <Pressable>
                 <View
                   style={[
-                    styles.iconBox,
-                    { backgroundColor: item.color || "#5B2EEA" },
+                    styles.challengeRow,
+                    { borderBottomColor: colors.border },
                   ]}
                 >
-                  <MaterialCommunityIcons
-                    name={(item.icon as any) || "flask-outline"}
-                    size={22}
-                    color="#FFFFFF"
-                  />
-                </View>
-
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.challengeTitle}>{item.title}</Text>
-                  <Text style={styles.challengeDue}>{item.due}</Text>
-                </View>
-
-                <View
-                  style={[
-                    styles.priorityBadge,
-                    { backgroundColor: `${item.color}18` },
-                  ]}
-                >
-                  <Text
+                  <View
                     style={[
-                      styles.priorityText,
-                      { color: item.color || "#5B2EEA" },
+                      styles.iconBox,
+                      { backgroundColor: item.color || "#5B2EEA" },
                     ]}
                   >
-                    {item.priority}
-                  </Text>
+                    <MaterialCommunityIcons
+                      name={(item.icon as any) || "flask-outline"}
+                      size={22}
+                      color="#FFFFFF"
+                    />
+                  </View>
+
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text
+                      style={[styles.challengeTitle, { color: colors.text }]}
+                      numberOfLines={2}
+                    >
+                      {item.title}
+                    </Text>
+                    <Text
+                      style={[styles.challengeDue, { color: colors.subtext }]}
+                    >
+                      {item.due}
+                    </Text>
+                  </View>
+
+                  <View
+                    style={[
+                      styles.priorityBadge,
+                      { backgroundColor: `${item.color}18` },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.priorityText,
+                        { color: item.color || "#5B2EEA" },
+                      ]}
+                    >
+                      {item.priority}
+                    </Text>
+                  </View>
                 </View>
               </Pressable>
             </Link>
@@ -196,6 +222,8 @@ export default function HomeScreen() {
         <GridButton
           href="/tasks"
           title="Challenges"
+          cardBg={colors.card}
+          textColor={colors.text}
           icon={
             <MaterialCommunityIcons name="flask" size={38} color="#6C3DEB" />
           }
@@ -203,26 +231,36 @@ export default function HomeScreen() {
         <GridButton
           href="/map"
           title="Challenge Map"
+          cardBg={colors.card}
+          textColor={colors.text}
           icon={<Ionicons name="location" size={38} color="#35B86B" />}
         />
         <GridButton
           href="/safety"
           title="Activity Tools"
+          cardBg={colors.card}
+          textColor={colors.text}
           icon={<Ionicons name="shield-checkmark" size={38} color="#FF9F1C" />}
         />
         <GridButton
           href="/resources"
           title="Resources"
+          cardBg={colors.card}
+          textColor={colors.text}
           icon={<Ionicons name="book" size={38} color="#3B82F6" />}
         />
         <GridButton
           href="/profile"
           title="Team"
+          cardBg={colors.card}
+          textColor={colors.text}
           icon={<Ionicons name="people" size={38} color="#7C3AED" />}
         />
         <GridButton
           href="/settings"
           title="Settings"
+          cardBg={colors.card}
+          textColor={colors.text}
           icon={<Ionicons name="settings" size={38} color="#6B7280" />}
         />
       </View>
@@ -231,7 +269,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#F7F4FF" },
+  screen: { flex: 1 },
   content: { paddingBottom: 110 },
   header: {
     minHeight: 215,
@@ -255,7 +293,6 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   card: {
-    backgroundColor: "#FFFFFF",
     marginHorizontal: 20,
     marginTop: 10,
     borderRadius: 26,
@@ -271,25 +308,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  sectionTitle: { fontSize: 20, fontWeight: "800", color: "#181024" },
+  sectionTitle: { fontSize: 20, fontWeight: "800" },
   viewAll: { fontSize: 14, fontWeight: "700", color: "#5B2EEA" },
   challengeRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: "#F0EDF8",
     gap: 14,
   },
   iconBox: {
     width: 42,
     height: 42,
+    flexShrink: 0,
     borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
   },
-  challengeTitle: { fontSize: 16, fontWeight: "800", color: "#1D1828" },
-  challengeDue: { fontSize: 13, color: "#7A7288", marginTop: 4 },
+  challengeTitle: { fontSize: 16, fontWeight: "800" },
+  challengeDue: { fontSize: 13, marginTop: 4 },
   priorityBadge: {
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -297,31 +334,24 @@ const styles = StyleSheet.create({
   },
   priorityText: { fontSize: 11, fontWeight: "800" },
   loadingBox: { paddingVertical: 26, alignItems: "center", gap: 10 },
-  loadingText: { fontSize: 13, fontWeight: "700", color: "#7A7288" },
+  loadingText: { fontSize: 13, fontWeight: "700" },
   emptyBox: { paddingVertical: 26, alignItems: "center" },
-  emptyTitle: {
-    marginTop: 8,
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#1D1828",
-  },
-  emptyText: {
-    marginTop: 4,
-    fontSize: 13,
-    color: "#7A7288",
-    textAlign: "center",
-  },
+  emptyTitle: { marginTop: 8, fontSize: 16, fontWeight: "800" },
+  emptyText: { marginTop: 4, fontSize: 13, textAlign: "center" },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     paddingHorizontal: 20,
+    paddingBottom: 20, // ← add bottom padding
     marginTop: 22,
     gap: 14,
   },
+  gridPressable: {
+    width: "47.5%", // ← width goes here on Pressable
+  },
   gridCard: {
-    width: "47.5%",
+    width: "100%", // ← fill the Pressable
     minHeight: 118,
-    backgroundColor: "#FFFFFF",
     borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
@@ -331,10 +361,5 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 2,
   },
-  gridText: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#211A30",
-    textAlign: "center",
-  },
+  gridText: { fontSize: 14, fontWeight: "800", textAlign: "center" },
 });

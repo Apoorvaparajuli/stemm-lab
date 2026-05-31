@@ -27,6 +27,7 @@ import {
   View,
 } from "react-native";
 import { auth, db } from "../../../../lib/firebase";
+import { useTheme } from "../../../../lib/ThemeContext";
 
 type Challenge = {
   id: string;
@@ -97,6 +98,7 @@ const getLocalSubmissions = () => {
 
 export default function AddChallengeResultScreen() {
   const navigation = useNavigation();
+  const { colors } = useTheme();
 
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(
@@ -116,12 +118,12 @@ export default function AddChallengeResultScreen() {
     navigation.setOptions({
       headerShown: true,
       title: "Submit Result",
-      headerStyle: { backgroundColor: "#F7F4FF" },
+      headerStyle: { backgroundColor: colors.background },
       headerShadowVisible: false,
-      headerTintColor: "#1D1828",
+      headerTintColor: colors.text,
       headerTitleStyle: { fontWeight: "800" },
     });
-  }, [navigation]);
+  }, [navigation, colors]);
 
   useEffect(() => {
     setupDatabase();
@@ -139,14 +141,11 @@ export default function AddChallengeResultScreen() {
     try {
       const currentUser = auth.currentUser;
       if (!currentUser) return;
-
       const userSnap = await getDoc(doc(db, "users", currentUser.uid));
       if (!userSnap.exists()) return;
-
       const data = userSnap.data();
       let savedTeamName = data.teamName || "";
       const savedTeamCode = data.teamCode || "";
-
       if (!savedTeamName && savedTeamCode) {
         const teamSnap = await getDoc(doc(db, "teams", savedTeamCode));
         if (teamSnap.exists()) {
@@ -154,7 +153,6 @@ export default function AddChallengeResultScreen() {
           savedTeamName = teamData.teamName || teamData.name || "";
         }
       }
-
       setTeamName(savedTeamName);
     } catch (error) {
       console.log("Error loading team name:", error);
@@ -191,14 +189,12 @@ export default function AddChallengeResultScreen() {
       Alert.alert("Permission needed", "Please allow photo library access.");
       return;
     }
-
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: true,
       quality: 0.8,
       videoMaxDuration: 120,
     });
-
     if (!result.canceled) {
       setEvidenceUri(result.assets[0].uri);
       setEvidenceType(result.assets[0].type === "video" ? "video" : "image");
@@ -211,7 +207,6 @@ export default function AddChallengeResultScreen() {
       Alert.alert("Permission needed", "Please allow camera access.");
       return;
     }
-
     Alert.alert("Camera", "What would you like to capture?", [
       {
         text: "Take Photo",
@@ -250,14 +245,11 @@ export default function AddChallengeResultScreen() {
       Alert.alert("Missing fields", "Please fill in all result details.");
       return;
     }
-
     try {
       setSaving(true);
-
       let gpsLocation = null;
       let latitude = null;
       let longitude = null;
-
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === "granted") {
@@ -269,8 +261,6 @@ export default function AddChallengeResultScreen() {
       } catch {
         console.log("GPS unavailable, skipping.");
       }
-
-      // Save to Firebase
       await addDoc(collection(db, "submissions"), {
         challengeId: selectedChallenge.id,
         challengeTitle: selectedChallenge.title,
@@ -282,8 +272,6 @@ export default function AddChallengeResultScreen() {
         gpsLocation,
         createdAt: serverTimestamp(),
       });
-
-      // Save to SQLite local cache
       saveSubmissionLocally({
         challengeId: selectedChallenge.id,
         challengeTitle: selectedChallenge.title,
@@ -295,14 +283,11 @@ export default function AddChallengeResultScreen() {
         latitude,
         longitude,
       });
-
       await updateDoc(doc(db, "challenges", selectedChallenge.id), {
         status: "Completed",
         completedAt: serverTimestamp(),
       });
-
       refreshLocalCount();
-
       Alert.alert(
         "Result saved",
         "Your STEMM challenge result was saved to Firebase and cached locally.",
@@ -320,8 +305,6 @@ export default function AddChallengeResultScreen() {
       );
     } catch (error) {
       console.log("Error saving submission:", error);
-
-      // Fallback: save locally if Firebase fails
       if (selectedChallenge) {
         try {
           saveSubmissionLocally({
@@ -350,13 +333,19 @@ export default function AddChallengeResultScreen() {
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.heroCard}>
+    <ScrollView
+      style={[styles.screen, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.content}
+    >
+      {/* Hero Card */}
+      <View style={[styles.heroCard, { backgroundColor: colors.card }]}>
         <View style={styles.iconCircle}>
           <MaterialCommunityIcons name="flask-plus" size={42} color="#5B2EEA" />
         </View>
-        <Text style={styles.title}>Submit Challenge Result</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { color: colors.text }]}>
+          Submit Challenge Result
+        </Text>
+        <Text style={[styles.subtitle, { color: colors.subtext }]}>
           Select a STEMM challenge and record your team's results, observations
           and evidence.
         </Text>
@@ -371,85 +360,135 @@ export default function AddChallengeResultScreen() {
         )}
       </View>
 
-      <View style={styles.formCard}>
-        <Text style={styles.label}>Choose Challenge</Text>
+      {/* Form Card */}
+      <View style={[styles.formCard, { backgroundColor: colors.card }]}>
+        <Text style={[styles.label, { color: colors.text }]}>
+          Choose Challenge
+        </Text>
 
         {loadingChallenges ? (
-          <View style={styles.loadingBox}>
+          <View
+            style={[
+              styles.loadingBox,
+              {
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+              },
+            ]}
+          >
             <ActivityIndicator color="#5B2EEA" />
-            <Text style={styles.loadingText}>Loading challenges...</Text>
+            <Text style={[styles.loadingText, { color: colors.subtext }]}>
+              Loading challenges...
+            </Text>
           </View>
         ) : (
           <View style={styles.challengePicker}>
-            {challenges.map((challenge) => (
-              <Pressable
-                key={challenge.id}
-                onPress={() => setSelectedChallenge(challenge)}
-                style={[
-                  styles.challengeOption,
-                  selectedChallenge?.id === challenge.id &&
-                    styles.challengeOptionActive,
-                ]}
-              >
-                <Text
+            {challenges.map((challenge) => {
+              const isActive = selectedChallenge?.id === challenge.id;
+              return (
+                <Pressable
+                  key={challenge.id}
+                  onPress={() => setSelectedChallenge(challenge)}
                   style={[
-                    styles.challengeOptionText,
-                    selectedChallenge?.id === challenge.id &&
-                      styles.challengeOptionTextActive,
+                    styles.challengeOption,
+                    {
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                    },
+                    isActive && styles.challengeOptionActive,
                   ]}
                 >
-                  {challenge.title}
-                </Text>
+                  <Text
+                    style={[
+                      styles.challengeOptionText,
+                      { color: colors.subtext },
+                      isActive && styles.challengeOptionTextActive,
+                    ]}
+                  >
+                    {challenge.title}
+                  </Text>
 
-                {challenge.status === "Completed" && (
-                  <Text style={styles.completedTag}>Completed</Text>
-                )}
+                  {challenge.status === "Completed" && (
+                    <Text style={styles.completedTag}>Completed</Text>
+                  )}
 
-                {selectedChallenge?.id === challenge.id && (
-                  <Ionicons name="checkmark-circle" size={20} color="#5B2EEA" />
-                )}
-              </Pressable>
-            ))}
+                  {isActive && (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={20}
+                      color="#5B2EEA"
+                    />
+                  )}
+                </Pressable>
+              );
+            })}
           </View>
         )}
 
-        <Text style={styles.label}>Team Name</Text>
+        <Text style={[styles.label, { color: colors.text }]}>Team Name</Text>
         <TextInput
           value={teamName}
           onChangeText={setTeamName}
           placeholder="e.g. Team Newton"
           placeholderTextColor="#9A94A6"
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              backgroundColor: colors.background,
+              borderColor: colors.border,
+              color: colors.text,
+            },
+          ]}
         />
 
-        <Text style={styles.label}>Result Summary</Text>
+        <Text style={[styles.label, { color: colors.text }]}>
+          Result Summary
+        </Text>
         <TextInput
           value={resultSummary}
           onChangeText={setResultSummary}
           placeholder="Briefly explain the result..."
           placeholderTextColor="#9A94A6"
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              backgroundColor: colors.background,
+              borderColor: colors.border,
+              color: colors.text,
+            },
+          ]}
         />
 
-        <Text style={styles.label}>Observations</Text>
+        <Text style={[styles.label, { color: colors.text }]}>Observations</Text>
         <TextInput
           value={observations}
           onChangeText={setObservations}
           placeholder="Write observations, measurements or findings..."
           placeholderTextColor="#9A94A6"
-          style={[styles.input, styles.textArea]}
+          style={[
+            styles.input,
+            styles.textArea,
+            {
+              backgroundColor: colors.background,
+              borderColor: colors.border,
+              color: colors.text,
+            },
+          ]}
           multiline
           textAlignVertical="top"
         />
       </View>
 
-      <View style={styles.evidenceCard}>
+      {/* Evidence Card */}
+      <View style={[styles.evidenceCard, { backgroundColor: colors.card }]}>
         <View style={styles.evidenceHeader}>
           <Ionicons name="camera-outline" size={22} color="#5B2EEA" />
-          <Text style={styles.evidenceTitle}>Evidence Upload</Text>
+          <Text style={[styles.evidenceTitle, { color: colors.text }]}>
+            Evidence Upload
+          </Text>
         </View>
 
-        <Text style={styles.evidenceText}>
+        <Text style={[styles.evidenceText, { color: colors.subtext }]}>
           Add a photo or video from your camera, or upload from your gallery as
           evidence for this result.
         </Text>
@@ -457,12 +496,28 @@ export default function AddChallengeResultScreen() {
         {evidenceUri ? (
           <View style={styles.previewWrap}>
             {evidenceType === "video" ? (
-              <View style={styles.videoPreview}>
-                <View style={styles.videoIconCircle}>
+              <View
+                style={[
+                  styles.videoPreview,
+                  { backgroundColor: colors.background },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.videoIconCircle,
+                    { backgroundColor: colors.card },
+                  ]}
+                >
                   <Ionicons name="videocam" size={32} color="#5B2EEA" />
                 </View>
-                <Text style={styles.videoPreviewTitle}>Video selected</Text>
-                <Text style={styles.videoPreviewSub}>
+                <Text
+                  style={[styles.videoPreviewTitle, { color: colors.text }]}
+                >
+                  Video selected
+                </Text>
+                <Text
+                  style={[styles.videoPreviewSub, { color: colors.subtext }]}
+                >
                   Ready to submit as evidence
                 </Text>
               </View>
@@ -473,7 +528,10 @@ export default function AddChallengeResultScreen() {
               />
             )}
 
-            <Pressable style={styles.removeButton} onPress={clearEvidence}>
+            <Pressable
+              style={[styles.removeButton, { backgroundColor: colors.card }]}
+              onPress={clearEvidence}
+            >
               <Ionicons name="close-circle" size={24} color="#FF4D4F" />
             </Pressable>
           </View>
@@ -481,7 +539,7 @@ export default function AddChallengeResultScreen() {
 
         <View style={styles.evidenceButtonRow}>
           <Pressable
-            style={styles.evidenceHalfButton}
+            style={[styles.evidenceHalfButton, { borderColor: "#5B2EEA" }]}
             onPress={takePhotoOrVideo}
           >
             <Ionicons name="camera-outline" size={20} color="#5B2EEA" />
@@ -489,7 +547,7 @@ export default function AddChallengeResultScreen() {
           </Pressable>
 
           <Pressable
-            style={styles.evidenceHalfButton}
+            style={[styles.evidenceHalfButton, { borderColor: "#5B2EEA" }]}
             onPress={pickFromGallery}
           >
             <Ionicons name="images-outline" size={20} color="#5B2EEA" />
@@ -498,7 +556,12 @@ export default function AddChallengeResultScreen() {
         </View>
 
         {evidenceUri ? (
-          <View style={styles.evidenceTypeBadge}>
+          <View
+            style={[
+              styles.evidenceTypeBadge,
+              { backgroundColor: colors.background },
+            ]}
+          >
             <Ionicons
               name={evidenceType === "video" ? "videocam" : "image"}
               size={14}
@@ -516,11 +579,14 @@ export default function AddChallengeResultScreen() {
         ) : null}
       </View>
 
-      <View style={styles.sqliteInfoCard}>
+      {/* SQLite Info Card */}
+      <View style={[styles.sqliteInfoCard, { backgroundColor: colors.card }]}>
         <Ionicons name="save-outline" size={20} color="#5B2EEA" />
         <View style={{ flex: 1 }}>
-          <Text style={styles.sqliteInfoTitle}>Local Storage Active</Text>
-          <Text style={styles.sqliteInfoText}>
+          <Text style={[styles.sqliteInfoTitle, { color: colors.text }]}>
+            Local Storage Active
+          </Text>
+          <Text style={[styles.sqliteInfoText, { color: colors.subtext }]}>
             Results are cached locally with SQLite and synced to Firebase on
             submission.
           </Text>
@@ -542,10 +608,9 @@ export default function AddChallengeResultScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#F7F4FF" },
+  screen: { flex: 1 },
   content: { padding: 20, paddingBottom: 36 },
   heroCard: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 26,
     padding: 24,
     alignItems: "center",
@@ -563,12 +628,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "800",
-    color: "#1D1828",
     textAlign: "center",
   },
   subtitle: {
     fontSize: 14,
-    color: "#6F687D",
     textAlign: "center",
     lineHeight: 21,
     marginTop: 8,
@@ -589,7 +652,6 @@ const styles = StyleSheet.create({
     color: "#3B82F6",
   },
   formCard: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     padding: 18,
     marginBottom: 18,
@@ -597,27 +659,22 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: "800",
-    color: "#1D1828",
     marginBottom: 8,
     marginTop: 12,
   },
   loadingBox: {
-    backgroundColor: "#FBFAFF",
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#EEEAFD",
     padding: 16,
     alignItems: "center",
     gap: 8,
   },
-  loadingText: { fontSize: 13, fontWeight: "700", color: "#7A7288" },
+  loadingText: { fontSize: 13, fontWeight: "700" },
   challengePicker: { gap: 10, marginBottom: 8 },
   challengeOption: {
     minHeight: 50,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#EEEAFD",
-    backgroundColor: "#FBFAFF",
     paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center",
@@ -631,7 +688,6 @@ const styles = StyleSheet.create({
   challengeOptionText: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#6F687D",
     flex: 1,
   },
   challengeOptionTextActive: { color: "#5B2EEA" },
@@ -648,15 +704,11 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#EEEAFD",
-    backgroundColor: "#FBFAFF",
     paddingHorizontal: 14,
     fontSize: 14,
-    color: "#1D1828",
   },
   textArea: { height: 110, paddingTop: 14 },
   evidenceCard: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     padding: 18,
     marginBottom: 18,
@@ -667,10 +719,9 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 8,
   },
-  evidenceTitle: { fontSize: 16, fontWeight: "800", color: "#1D1828" },
+  evidenceTitle: { fontSize: 16, fontWeight: "800" },
   evidenceText: {
     fontSize: 13,
-    color: "#6F687D",
     lineHeight: 20,
     marginBottom: 14,
   },
@@ -685,7 +736,6 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 190,
     borderRadius: 18,
-    backgroundColor: "#EEE9FF",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
@@ -694,12 +744,11 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
   },
-  videoPreviewTitle: { fontSize: 15, fontWeight: "800", color: "#1D1828" },
-  videoPreviewSub: { fontSize: 13, color: "#7A7288" },
+  videoPreviewTitle: { fontSize: 15, fontWeight: "800" },
+  videoPreviewSub: { fontSize: 13 },
   removeButton: {
     position: "absolute",
     top: 8,
@@ -707,7 +756,6 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -721,7 +769,6 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#5B2EEA",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -735,7 +782,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
-    backgroundColor: "#F3F0FA",
     alignSelf: "flex-start",
   },
   evidenceTypeBadgeText: { fontSize: 12, fontWeight: "800" },
@@ -743,7 +789,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: "#F1ECFF",
     borderRadius: 16,
     padding: 14,
     marginBottom: 18,
@@ -751,11 +796,9 @@ const styles = StyleSheet.create({
   sqliteInfoTitle: {
     fontSize: 14,
     fontWeight: "800",
-    color: "#1D1828",
   },
   sqliteInfoText: {
     fontSize: 12,
-    color: "#6F687D",
     marginTop: 2,
     lineHeight: 18,
   },

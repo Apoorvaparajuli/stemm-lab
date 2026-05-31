@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "../../../lib/ThemeContext";
 
 const challenges = [
   {
@@ -62,13 +63,13 @@ const challenges = [
 ];
 
 export default function MapScreen() {
+  const { colors } = useTheme();
   const [location, setLocation] =
     useState<Location.LocationObjectCoords | null>(null);
   const [mode, setMode] = useState<"map" | "list">("map");
 
   const getLocation = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
-
     if (status !== "granted") {
       Alert.alert(
         "Location permission denied",
@@ -76,7 +77,6 @@ export default function MapScreen() {
       );
       return;
     }
-
     const current = await Location.getCurrentPositionAsync({});
     setLocation(current.coords);
   };
@@ -99,8 +99,10 @@ export default function MapScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.segmentWrap}>
+    <SafeAreaView
+      style={[styles.screen, { backgroundColor: colors.background }]}
+    >
+      <View style={[styles.segmentWrap, { backgroundColor: colors.card }]}>
         <Pressable
           style={[styles.segment, mode === "map" && styles.segmentActive]}
           onPress={() => setMode("map")}
@@ -108,6 +110,7 @@ export default function MapScreen() {
           <Text
             style={[
               styles.segmentText,
+              { color: colors.text },
               mode === "map" && styles.segmentActiveText,
             ]}
           >
@@ -122,6 +125,7 @@ export default function MapScreen() {
           <Text
             style={[
               styles.segmentText,
+              { color: colors.text },
               mode === "list" && styles.segmentActiveText,
             ]}
           >
@@ -131,7 +135,12 @@ export default function MapScreen() {
       </View>
 
       {mode === "map" ? (
-        <View style={styles.mapWrap}>
+        <View
+          style={[
+            styles.mapWrap,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
           <MapView style={styles.map} region={center}>
             {location && (
               <Marker
@@ -184,7 +193,7 @@ export default function MapScreen() {
           {challenges.map((item) => (
             <Pressable
               key={item.id}
-              style={styles.listCard}
+              style={[styles.listCard, { backgroundColor: colors.card }]}
               onPress={() => openDirections(item.latitude, item.longitude)}
             >
               <View
@@ -201,8 +210,12 @@ export default function MapScreen() {
               </View>
 
               <View style={{ flex: 1 }}>
-                <Text style={styles.listTitle}>{item.title}</Text>
-                <Text style={styles.listSubtitle}>{item.subtitle}</Text>
+                <Text style={[styles.listTitle, { color: colors.text }]}>
+                  {item.title}
+                </Text>
+                <Text style={[styles.listSubtitle, { color: colors.subtext }]}>
+                  {item.subtitle}
+                </Text>
                 <Text style={styles.listCoords}>
                   {item.latitude}, {item.longitude}
                 </Text>
@@ -214,12 +227,14 @@ export default function MapScreen() {
         </ScrollView>
       )}
 
-      <View style={styles.locationCard}>
+      <View style={[styles.locationCard, { backgroundColor: colors.card }]}>
         <View style={styles.locationLeft}>
           <Ionicons name="location-outline" size={24} color="#5B2EEA" />
           <View>
-            <Text style={styles.locationTitle}>My Location</Text>
-            <Text style={styles.locationSubtitle}>
+            <Text style={[styles.locationTitle, { color: colors.text }]}>
+              My Location
+            </Text>
+            <Text style={[styles.locationSubtitle, { color: colors.subtext }]}>
               {location
                 ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
                 : "Getting GPS location..."}
@@ -236,16 +251,12 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#F7F4FF",
-  },
+  screen: { flex: 1 },
   segmentWrap: {
     height: 42,
     marginHorizontal: 95,
     marginTop: 14,
     marginBottom: 12,
-    backgroundColor: "#FFFFFF",
     borderRadius: 22,
     flexDirection: "row",
     padding: 4,
@@ -257,30 +268,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  segmentActive: {
-    backgroundColor: "#5B2EEA",
-  },
+  segmentActive: { backgroundColor: "#5B2EEA" },
   segmentText: {
     fontSize: 14,
     fontWeight: "800",
-    color: "#1D1828",
   },
-  segmentActiveText: {
-    color: "#FFFFFF",
-  },
+  segmentActiveText: { color: "#FFFFFF" },
   mapWrap: {
     flex: 1,
     marginHorizontal: 18,
     marginBottom: 110,
     borderRadius: 26,
     overflow: "hidden",
-    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#DDD3FF",
   },
-  map: {
-    flex: 1,
-  },
+  map: { flex: 1 },
   markerBubble: {
     minWidth: 138,
     maxWidth: 175,
@@ -328,7 +330,6 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   listCard: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 22,
     padding: 16,
     flexDirection: "row",
@@ -342,16 +343,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  listTitle: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#1D1828",
-  },
-  listSubtitle: {
-    fontSize: 13,
-    color: "#6F687D",
-    marginTop: 3,
-  },
+  listTitle: { fontSize: 16, fontWeight: "800" },
+  listSubtitle: { fontSize: 13, marginTop: 3 },
   listCoords: {
     fontSize: 12,
     color: "#5B2EEA",
@@ -363,7 +356,6 @@ const styles = StyleSheet.create({
     left: 24,
     right: 24,
     bottom: 24,
-    backgroundColor: "#FFFFFF",
     borderRadius: 22,
     padding: 16,
     flexDirection: "row",
@@ -376,16 +368,8 @@ const styles = StyleSheet.create({
     gap: 10,
     flex: 1,
   },
-  locationTitle: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: "#1D1828",
-  },
-  locationSubtitle: {
-    fontSize: 12,
-    color: "#6F687D",
-    marginTop: 3,
-  },
+  locationTitle: { fontSize: 15, fontWeight: "800" },
+  locationSubtitle: { fontSize: 12, marginTop: 3 },
   directionsButton: {
     backgroundColor: "#5B2EEA",
     paddingHorizontal: 18,
@@ -394,9 +378,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  directionsText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "800",
-  },
+  directionsText: { color: "#FFFFFF", fontSize: 14, fontWeight: "800" },
 });

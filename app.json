@@ -18,7 +18,8 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.yacqubs.stemmlab"
     },
     "web": {
       "output": "static",
@@ -50,6 +51,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a6b32390-ce80-4e48-9207-45a8902328a4"
+      }
     }
   }
 }

@@ -1,7 +1,7 @@
 import {
   DarkTheme,
   DefaultTheme,
-  ThemeProvider,
+  ThemeProvider as NavigationThemeProvider,
 } from "@react-navigation/native";
 import * as BackgroundFetch from "expo-background-fetch";
 import * as Notifications from "expo-notifications";
@@ -15,6 +15,7 @@ import { useColorScheme } from "react-native";
 import "react-native-reanimated";
 
 import { auth, db } from "../lib/firebase";
+import { ThemeProvider } from "../lib/ThemeContext";
 
 const BACKGROUND_TASK = "check-challenge-reminders";
 
@@ -68,13 +69,10 @@ const registerForNotificationsAsync = async (userId: string) => {
       return;
     }
 
-    // Note: getExpoPushTokenAsync requires Apple Developer account for iOS
-    // Local notifications work without this — skipped for development
     console.log(
       "Notification permissions granted — local notifications active",
     );
 
-    // Save notification preference to Firestore
     await setDoc(
       doc(db, "users", userId),
       { notificationsEnabled: true },
@@ -87,7 +85,6 @@ const registerForNotificationsAsync = async (userId: string) => {
 
 const scheduleChallengeReminder = async () => {
   try {
-    // Cancel existing reminders first to avoid duplicates
     await Notifications.cancelAllScheduledNotificationsAsync();
 
     await Notifications.scheduleNotificationAsync({
@@ -99,7 +96,7 @@ const scheduleChallengeReminder = async () => {
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds: 60 * 60 * 24,
+        seconds: 5,
         repeats: true,
       },
     });
@@ -121,7 +118,6 @@ export default function RootLayout() {
   const notificationListener = useRef<any>(null);
   const responseListener = useRef<any>(null);
 
-  // Auth state listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
@@ -130,25 +126,21 @@ export default function RootLayout() {
     return unsubscribe;
   }, []);
 
-  // Register background task on app start
   useEffect(() => {
     registerBackgroundTask();
   }, []);
 
-  // Register notifications and schedule reminders when user signs in
   useEffect(() => {
     if (!user) return;
 
     registerForNotificationsAsync(user.uid);
     scheduleChallengeReminder();
 
-    // Listen for notifications received while app is open
     notificationListener.current =
       Notifications.addNotificationReceivedListener((notification) => {
         console.log("Notification received:", notification);
       });
 
-    // Handle notification tap — navigate to the relevant screen
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
         const url = response.notification.request.content.data?.url as
@@ -165,7 +157,6 @@ export default function RootLayout() {
     };
   }, [user, router]);
 
-  // Handle last notification tap if app was closed
   useEffect(() => {
     Notifications.getLastNotificationResponseAsync().then((response) => {
       const url = response?.notification.request.content.data?.url as
@@ -177,7 +168,6 @@ export default function RootLayout() {
     });
   }, [router]);
 
-  // Auth-based routing
   useEffect(() => {
     if (!ready) return;
 
@@ -200,21 +190,25 @@ export default function RootLayout() {
   if (!ready) return null;
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="welcome" />
-        <Stack.Screen name="login" />
-        <Stack.Screen name="register" />
-        <Stack.Screen name="home" />
-        <Stack.Screen name="tasks" />
-        <Stack.Screen name="map" />
-        <Stack.Screen name="safety" />
-        <Stack.Screen name="resources" />
-        <Stack.Screen name="profile" />
-        <Stack.Screen name="settings" />
-        <Stack.Screen name="submissions" />
-      </Stack>
-      <StatusBar style="auto" />
+    <ThemeProvider>
+      <NavigationThemeProvider
+        value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+      >
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="welcome" />
+          <Stack.Screen name="login" />
+          <Stack.Screen name="register" />
+          <Stack.Screen name="home" />
+          <Stack.Screen name="tasks" />
+          <Stack.Screen name="map" />
+          <Stack.Screen name="safety" />
+          <Stack.Screen name="resources" />
+          <Stack.Screen name="profile" />
+          <Stack.Screen name="settings" />
+          <Stack.Screen name="submissions" />
+        </Stack>
+        <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+      </NavigationThemeProvider>
     </ThemeProvider>
   );
 }

@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { seedChallenges } from "../../../lib/seedChallenges";
+import { useTheme } from "../../../lib/ThemeContext";
 
 type Challenge = {
   id: string;
@@ -37,6 +38,7 @@ export default function ChallengesScreen() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ActiveTab>("All");
   const [searchText, setSearchText] = useState("");
+  const { colors } = useTheme();
 
   useFocusEffect(
     useCallback(() => {
@@ -85,17 +87,23 @@ export default function ChallengesScreen() {
   ).length;
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView
+      style={[styles.screen, { backgroundColor: colors.background }]}
+    >
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.headerTitle}>Challenges</Text>
-          <Text style={styles.headerSubtitle}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
+            Challenges
+          </Text>
+          <Text style={[styles.headerSubtitle, { color: colors.subtext }]}>
             Track and complete your STEMM activities
           </Text>
         </View>
 
         <Link href="/tasks/submissions" asChild>
-          <Pressable style={styles.cacheButton}>
+          <Pressable
+            style={[styles.cacheButton, { backgroundColor: colors.card }]}
+          >
             <Ionicons name="server-outline" size={16} color="#5B2EEA" />
             <Text style={styles.cacheButtonText}>Local Cache</Text>
           </Pressable>
@@ -104,19 +112,29 @@ export default function ChallengesScreen() {
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.searchRow}>
-          <View style={styles.searchBox}>
+          <View
+            style={[
+              styles.searchBox,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
             <Ionicons name="search" size={18} color="#8C8796" />
             <TextInput
               placeholder="Search challenges..."
               placeholderTextColor="#9A94A6"
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: colors.text }]}
               value={searchText}
               onChangeText={setSearchText}
             />
           </View>
         </View>
 
-        <View style={styles.tabs}>
+        <View
+          style={[
+            styles.tabs,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
           <Pressable
             style={[styles.tab, activeTab === "All" && styles.activeTab]}
             onPress={() => setActiveTab("All")}
@@ -124,6 +142,7 @@ export default function ChallengesScreen() {
             <Text
               style={[
                 styles.tabText,
+                { color: colors.subtext },
                 activeTab === "All" && styles.activeTabText,
               ]}
             >
@@ -138,6 +157,7 @@ export default function ChallengesScreen() {
             <Text
               style={[
                 styles.tabText,
+                { color: colors.subtext },
                 activeTab === "Ongoing" && styles.activeTabText,
               ]}
             >
@@ -152,6 +172,7 @@ export default function ChallengesScreen() {
             <Text
               style={[
                 styles.tabText,
+                { color: colors.subtext },
                 activeTab === "Completed" && styles.activeTabText,
               ]}
             >
@@ -161,15 +182,19 @@ export default function ChallengesScreen() {
         </View>
 
         {loading ? (
-          <View style={styles.loadingBox}>
+          <View style={[styles.loadingBox, { backgroundColor: colors.card }]}>
             <ActivityIndicator color="#5B2EEA" />
-            <Text style={styles.loadingText}>Loading challenges...</Text>
+            <Text style={[styles.loadingText, { color: colors.subtext }]}>
+              Loading challenges...
+            </Text>
           </View>
         ) : filteredChallenges.length === 0 ? (
-          <View style={styles.emptyBox}>
+          <View style={[styles.emptyBox, { backgroundColor: colors.card }]}>
             <Ionicons name="search-outline" size={26} color="#9A94A6" />
-            <Text style={styles.emptyTitle}>No challenges found</Text>
-            <Text style={styles.emptyText}>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              No challenges found
+            </Text>
+            <Text style={[styles.emptyText, { color: colors.subtext }]}>
               Try another tab or search term.
             </Text>
           </View>
@@ -181,10 +206,15 @@ export default function ChallengesScreen() {
               return (
                 <Pressable
                   key={challenge.id}
-                  style={styles.card}
+                  style={[styles.card, { backgroundColor: colors.card }]}
                   onPress={() => router.push(`/tasks/${challenge.id}`)}
                 >
-                  <View style={styles.iconWrap}>
+                  <View
+                    style={[
+                      styles.iconWrap,
+                      { backgroundColor: colors.background },
+                    ]}
+                  >
                     <MaterialCommunityIcons
                       name={challenge.icon as any}
                       size={34}
@@ -194,7 +224,9 @@ export default function ChallengesScreen() {
 
                   <View style={styles.cardMiddle}>
                     <View style={styles.titleRow}>
-                      <Text style={styles.cardTitle}>{challenge.title}</Text>
+                      <Text style={[styles.cardTitle, { color: colors.text }]}>
+                        {challenge.title}
+                      </Text>
 
                       <View
                         style={[
@@ -219,7 +251,9 @@ export default function ChallengesScreen() {
                       </View>
                     </View>
 
-                    <Text style={styles.description}>
+                    <Text
+                      style={[styles.description, { color: colors.subtext }]}
+                    >
                       {challenge.description}
                     </Text>
 
@@ -236,6 +270,7 @@ export default function ChallengesScreen() {
                       <Text
                         style={[
                           styles.dueText,
+                          { color: colors.subtext },
                           isCompleted && styles.completedDueText,
                         ]}
                       >
@@ -265,7 +300,6 @@ export default function ChallengesScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F7F4FF",
   },
   header: {
     paddingHorizontal: 18,
@@ -282,20 +316,16 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 32,
     fontWeight: "900",
-    color: "#1D1828",
     letterSpacing: -0.8,
   },
   headerSubtitle: {
     marginTop: 4,
     fontSize: 14,
     fontWeight: "600",
-    color: "#7A7288",
   },
   cacheButton: {
     flexDirection: "row",
-    alignItems: "center",
     gap: 6,
-    backgroundColor: "#EEE9FF",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12,
@@ -319,10 +349,8 @@ const styles = StyleSheet.create({
   searchBox: {
     flex: 1,
     height: 48,
-    backgroundColor: "#FFFFFF",
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#EEEAFD",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 14,
@@ -331,26 +359,21 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: "#1D1828",
   },
   filterButton: {
     width: 48,
     height: 48,
-    backgroundColor: "#FFFFFF",
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#EEEAFD",
     alignItems: "center",
     justifyContent: "center",
   },
   tabs: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 14,
     padding: 5,
     flexDirection: "row",
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#EEEAFD",
   },
   tab: {
     flex: 1,
@@ -364,13 +387,11 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#6F687D",
   },
   activeTabText: {
     color: "#FFFFFF",
   },
   loadingBox: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 22,
     alignItems: "center",
@@ -379,10 +400,8 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#7A7288",
   },
   emptyBox: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 24,
     alignItems: "center",
@@ -391,19 +410,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 16,
     fontWeight: "900",
-    color: "#1D1828",
   },
   emptyText: {
     marginTop: 4,
     fontSize: 13,
     fontWeight: "600",
-    color: "#7A7288",
   },
   list: {
     gap: 14,
   },
   card: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 16,
     flexDirection: "row",
@@ -418,7 +434,6 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 17,
-    backgroundColor: "#F4F1FF",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -435,11 +450,9 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     fontWeight: "800",
-    color: "#1D1828",
   },
   description: {
     fontSize: 13,
-    color: "#7A7288",
     lineHeight: 18,
     marginTop: 5,
   },
@@ -451,7 +464,6 @@ const styles = StyleSheet.create({
   },
   dueText: {
     fontSize: 12,
-    color: "#7A7288",
     fontWeight: "600",
   },
   completedDueText: {

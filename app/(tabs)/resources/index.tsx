@@ -1,6 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "../../../lib/ThemeContext";
 
 const resources = [
   {
@@ -48,21 +49,27 @@ const resources = [
 ];
 
 export default function ResourcesScreen() {
+  const { colors } = useTheme();
+
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Resources</Text>
-        <Text style={styles.subtitle}>
+    <SafeAreaView
+      style={[styles.screen, { backgroundColor: colors.background }]}
+    >
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
+        <Text style={[styles.title, { color: colors.text }]}>Resources</Text>
+        <Text style={[styles.subtitle, { color: colors.subtext }]}>
           STEMM formulas and notes to help complete your activities.
         </Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.infoCard}>
+        <View style={[styles.infoCard, { backgroundColor: colors.card }]}>
           <Ionicons name="school-outline" size={28} color="#5B2EEA" />
           <View style={{ flex: 1 }}>
-            <Text style={styles.infoTitle}>Learning Support</Text>
-            <Text style={styles.infoText}>
+            <Text style={[styles.infoTitle, { color: colors.text }]}>
+              Learning Support
+            </Text>
+            <Text style={[styles.infoText, { color: colors.subtext }]}>
               Use these quick notes while completing challenges, recording
               results and writing reflections.
             </Text>
@@ -71,7 +78,10 @@ export default function ResourcesScreen() {
 
         <View style={styles.list}>
           {resources.map((item) => (
-            <View key={item.title} style={styles.resourceCard}>
+            <View
+              key={item.title}
+              style={[styles.resourceCard, { backgroundColor: colors.card }]}
+            >
               <View
                 style={[
                   styles.iconWrap,
@@ -86,10 +96,19 @@ export default function ResourcesScreen() {
               </View>
 
               <View style={{ flex: 1 }}>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
+                <Text style={[styles.cardTitle, { color: colors.text }]}>
+                  {item.title}
+                </Text>
+                <Text style={[styles.cardSubtitle, { color: colors.subtext }]}>
+                  {item.subtitle}
+                </Text>
 
-                <View style={styles.formulaBox}>
+                <View
+                  style={[
+                    styles.formulaBox,
+                    { backgroundColor: colors.background },
+                  ]}
+                >
                   <Text style={styles.formulaText}>{item.formula}</Text>
                 </View>
               </View>
@@ -102,35 +121,28 @@ export default function ResourcesScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#F7F4FF",
-  },
+  screen: { flex: 1 },
   header: {
     paddingHorizontal: 18,
     paddingTop: 10,
     paddingBottom: 14,
-    backgroundColor: "#F7F4FF",
   },
   content: {
     paddingHorizontal: 18,
-    paddingBottom: 0,
+    paddingBottom: 20,
   },
   title: {
     fontSize: 32,
     fontWeight: "900",
-    color: "#1D1828",
     letterSpacing: -0.8,
   },
   subtitle: {
     marginTop: 5,
     fontSize: 14,
     fontWeight: "600",
-    color: "#7A7288",
     lineHeight: 21,
   },
   infoCard: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     padding: 18,
     flexDirection: "row",
@@ -140,19 +152,14 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 17,
     fontWeight: "800",
-    color: "#1D1828",
   },
   infoText: {
     fontSize: 13,
-    color: "#7A7288",
     lineHeight: 19,
     marginTop: 4,
   },
-  list: {
-    gap: 14,
-  },
+  list: { gap: 14 },
   resourceCard: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 22,
     padding: 16,
     flexDirection: "row",
@@ -168,16 +175,13 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: "800",
-    color: "#1D1828",
   },
   cardSubtitle: {
     fontSize: 13,
-    color: "#7A7288",
     lineHeight: 19,
     marginTop: 3,
   },
   formulaBox: {
-    backgroundColor: "#F7F4FF",
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 9,

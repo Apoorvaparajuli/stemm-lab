@@ -3,6 +3,7 @@ import { useNavigation } from "expo-router";
 import * as SQLite from "expo-sqlite";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useTheme } from "../../../../lib/ThemeContext";
 
 type LocalSubmission = {
   id: number;
@@ -23,18 +24,19 @@ export default function LocalSubmissionsScreen() {
   const navigation = useNavigation();
   const [submissions, setSubmissions] = useState<LocalSubmission[]>([]);
   const [expanded, setExpanded] = useState<number | null>(null);
+  const { colors } = useTheme();
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerShown: true,
       title: "Local Cache",
       headerBackTitle: "Back",
-      headerStyle: { backgroundColor: "#F7F4FF" },
+      headerStyle: { backgroundColor: colors.background },
       headerShadowVisible: false,
-      headerTintColor: "#1D1828",
+      headerTintColor: colors.text,
       headerTitleStyle: { fontWeight: "800" },
     });
-  }, [navigation]);
+  }, [navigation, colors]);
 
   useEffect(() => {
     loadSubmissions();
@@ -70,33 +72,50 @@ export default function LocalSubmissionsScreen() {
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.headerCard}>
+    <ScrollView
+      style={[styles.screen, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.content}
+    >
+      <View style={[styles.headerCard, { backgroundColor: colors.card }]}>
         <View style={styles.headerIconCircle}>
           <Ionicons name="server-outline" size={32} color="#5B2EEA" />
         </View>
-        <Text style={styles.headerTitle}>SQLite Local Cache</Text>
-        <Text style={styles.headerSubtitle}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
+          SQLite Local Cache
+        </Text>
+        <Text style={[styles.headerSubtitle, { color: colors.subtext }]}>
           Submissions stored locally on this device using SQLite. Data is synced
           to Firebase on submit.
         </Text>
 
         <View style={styles.statsRow}>
-          <View style={styles.statBox}>
+          <View
+            style={[styles.statBox, { backgroundColor: colors.background }]}
+          >
             <Text style={styles.statNumber}>{submissions.length}</Text>
-            <Text style={styles.statLabel}>Total</Text>
+            <Text style={[styles.statLabel, { color: colors.subtext }]}>
+              Total
+            </Text>
           </View>
-          <View style={styles.statBox}>
+          <View
+            style={[styles.statBox, { backgroundColor: colors.background }]}
+          >
             <Text style={styles.statNumber}>
               {submissions.filter((s) => s.synced === 1).length}
             </Text>
-            <Text style={styles.statLabel}>Synced</Text>
+            <Text style={[styles.statLabel, { color: colors.subtext }]}>
+              Synced
+            </Text>
           </View>
-          <View style={styles.statBox}>
+          <View
+            style={[styles.statBox, { backgroundColor: colors.background }]}
+          >
             <Text style={styles.statNumber}>
               {submissions.filter((s) => s.synced === 0).length}
             </Text>
-            <Text style={styles.statLabel}>Offline only</Text>
+            <Text style={[styles.statLabel, { color: colors.subtext }]}>
+              Offline only
+            </Text>
           </View>
         </View>
       </View>
@@ -109,10 +128,12 @@ export default function LocalSubmissionsScreen() {
       )}
 
       {submissions.length === 0 ? (
-        <View style={styles.emptyBox}>
+        <View style={[styles.emptyBox, { backgroundColor: colors.card }]}>
           <Ionicons name="server-outline" size={40} color="#C4BDD8" />
-          <Text style={styles.emptyTitle}>No local submissions yet</Text>
-          <Text style={styles.emptyText}>
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>
+            No local submissions yet
+          </Text>
+          <Text style={[styles.emptyText, { color: colors.subtext }]}>
             When you submit a challenge result, it will be cached here locally
             as a backup.
           </Text>
@@ -124,12 +145,14 @@ export default function LocalSubmissionsScreen() {
             return (
               <Pressable
                 key={item.id}
-                style={styles.card}
+                style={[styles.card, { backgroundColor: colors.card }]}
                 onPress={() => setExpanded(isExpanded ? null : item.id)}
               >
                 <View style={styles.cardHeader}>
                   <View style={styles.cardHeaderLeft}>
-                    <Text style={styles.challengeTitle}>
+                    <Text
+                      style={[styles.challengeTitle, { color: colors.text }]}
+                    >
                       {item.challenge_title}
                     </Text>
                     <Text style={styles.teamName}>{item.team_name}</Text>
@@ -175,19 +198,28 @@ export default function LocalSubmissionsScreen() {
                   </View>
                 </View>
 
-                <Text style={styles.dateText}>
+                <Text style={[styles.dateText, { color: colors.subtext }]}>
                   {formatDate(item.created_at)}
                 </Text>
 
                 {isExpanded && (
                   <View style={styles.expandedSection}>
-                    <View style={styles.divider} />
+                    <View
+                      style={[
+                        styles.divider,
+                        { backgroundColor: colors.border },
+                      ]}
+                    />
 
                     <Text style={styles.fieldLabel}>Result Summary</Text>
-                    <Text style={styles.fieldValue}>{item.result_summary}</Text>
+                    <Text style={[styles.fieldValue, { color: colors.text }]}>
+                      {item.result_summary}
+                    </Text>
 
                     <Text style={styles.fieldLabel}>Observations</Text>
-                    <Text style={styles.fieldValue}>{item.observations}</Text>
+                    <Text style={[styles.fieldValue, { color: colors.text }]}>
+                      {item.observations}
+                    </Text>
 
                     {item.latitude !== null && item.longitude !== null ? (
                       <>
@@ -209,7 +241,12 @@ export default function LocalSubmissionsScreen() {
                     {item.evidence_type ? (
                       <>
                         <Text style={styles.fieldLabel}>Evidence</Text>
-                        <View style={styles.evidenceBadge}>
+                        <View
+                          style={[
+                            styles.evidenceBadge,
+                            { backgroundColor: colors.background },
+                          ]}
+                        >
                           <Ionicons
                             name={
                               item.evidence_type === "video"
@@ -253,11 +290,13 @@ export default function LocalSubmissionsScreen() {
         </View>
       )}
 
-      <View style={styles.infoCard}>
+      <View style={[styles.infoCard, { backgroundColor: colors.card }]}>
         <Ionicons name="information-circle-outline" size={20} color="#5B2EEA" />
         <View style={{ flex: 1 }}>
-          <Text style={styles.infoTitle}>About Local Storage</Text>
-          <Text style={styles.infoText}>
+          <Text style={[styles.infoTitle, { color: colors.text }]}>
+            About Local Storage
+          </Text>
+          <Text style={[styles.infoText, { color: colors.subtext }]}>
             STEMM Lab uses SQLite to cache submissions locally on your device.
             This ensures your results are never lost even without an internet
             connection. Data marked as "Synced" has been successfully saved to
@@ -270,10 +309,9 @@ export default function LocalSubmissionsScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#F7F4FF" },
+  screen: { flex: 1 },
   content: { padding: 20, paddingBottom: 40 },
   headerCard: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 26,
     padding: 24,
     alignItems: "center",
@@ -291,12 +329,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontWeight: "900",
-    color: "#1D1828",
     textAlign: "center",
   },
   headerSubtitle: {
     fontSize: 13,
-    color: "#6F687D",
     textAlign: "center",
     lineHeight: 20,
     marginTop: 8,
@@ -309,7 +345,6 @@ const styles = StyleSheet.create({
   },
   statBox: {
     flex: 1,
-    backgroundColor: "#F7F4FF",
     borderRadius: 16,
     paddingVertical: 14,
     alignItems: "center",
@@ -322,7 +357,6 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#7A7288",
     marginTop: 4,
   },
   clearButton: {
@@ -343,7 +377,6 @@ const styles = StyleSheet.create({
     color: "#FF4D4F",
   },
   emptyBox: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     padding: 36,
     alignItems: "center",
@@ -352,17 +385,14 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: "800",
-    color: "#1D1828",
   },
   emptyText: {
     fontSize: 13,
-    color: "#7A7288",
     textAlign: "center",
     lineHeight: 20,
   },
   list: { gap: 14, marginBottom: 16 },
   card: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 22,
     padding: 18,
   },
@@ -376,7 +406,6 @@ const styles = StyleSheet.create({
   challengeTitle: {
     fontSize: 15,
     fontWeight: "800",
-    color: "#1D1828",
   },
   teamName: {
     fontSize: 13,
@@ -395,13 +424,11 @@ const styles = StyleSheet.create({
   syncText: { fontSize: 11, fontWeight: "800" },
   dateText: {
     fontSize: 12,
-    color: "#9A94A6",
     marginTop: 8,
   },
   expandedSection: { marginTop: 4 },
   divider: {
     height: 1,
-    backgroundColor: "#F0EDF8",
     marginVertical: 12,
   },
   fieldLabel: {
@@ -415,7 +442,6 @@ const styles = StyleSheet.create({
   },
   fieldValue: {
     fontSize: 14,
-    color: "#1D1828",
     lineHeight: 20,
   },
   gpsRow: {
@@ -435,7 +461,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 10,
-    backgroundColor: "#F3F0FA",
     alignSelf: "flex-start",
   },
   evidenceBadgeText: {
@@ -452,19 +477,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 12,
-    backgroundColor: "#F1ECFF",
     borderRadius: 16,
     padding: 14,
   },
   infoTitle: {
     fontSize: 13,
     fontWeight: "800",
-    color: "#1D1828",
     marginBottom: 4,
   },
   infoText: {
     fontSize: 12,
-    color: "#6F687D",
     lineHeight: 18,
   },
 });

@@ -20,12 +20,13 @@ import {
   View,
 } from "react-native";
 import { auth, db } from "../../lib/firebase";
+import { useTheme } from "../../lib/ThemeContext";
 
 export default function SettingsScreen() {
   const navigation = useNavigation();
+  const { isDark, toggleDark, colors } = useTheme();
 
   const [notifications, setNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
   const [locationAccess, setLocationAccess] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
@@ -36,12 +37,12 @@ export default function SettingsScreen() {
       headerShown: true,
       title: "Settings",
       headerBackTitle: "Back",
-      headerStyle: { backgroundColor: "#F7F4FF" },
+      headerStyle: { backgroundColor: colors.background },
       headerShadowVisible: false,
-      headerTintColor: "#1D1828",
+      headerTintColor: colors.text,
       headerTitleStyle: { fontWeight: "800" },
     });
-  }, [navigation]);
+  }, [navigation, colors]);
 
   const handleDeleteAccount = async () => {
     if (!deletePassword) {
@@ -55,17 +56,12 @@ export default function SettingsScreen() {
       const currentUser = auth.currentUser;
       if (!currentUser || !currentUser.email) return;
 
-      // Re-authenticate first — Firebase requires this before deletion
       const credential = EmailAuthProvider.credential(
         currentUser.email,
         deletePassword,
       );
       await reauthenticateWithCredential(currentUser, credential);
-
-      // Delete user data from Firestore
       await deleteDoc(doc(db, "users", currentUser.uid));
-
-      // Delete Firebase Auth account
       await deleteUser(currentUser);
 
       setShowDeleteModal(false);
@@ -94,10 +90,12 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Preferences</Text>
+        <View style={[styles.card, { backgroundColor: colors.card }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Preferences
+          </Text>
 
           <SettingToggle
             icon="notifications-outline"
@@ -105,14 +103,16 @@ export default function SettingsScreen() {
             subtitle="Challenge reminders and team updates"
             value={notifications}
             onValueChange={setNotifications}
+            colors={colors}
           />
 
           <SettingToggle
             icon="moon-outline"
             title="Dark Mode"
             subtitle="Use dark appearance"
-            value={darkMode}
-            onValueChange={setDarkMode}
+            value={isDark}
+            onValueChange={toggleDark}
+            colors={colors}
           />
 
           <SettingToggle
@@ -121,17 +121,21 @@ export default function SettingsScreen() {
             subtitle="Used for GPS-based STEMM challenges"
             value={locationAccess}
             onValueChange={setLocationAccess}
+            colors={colors}
           />
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Account</Text>
+        <View style={[styles.card, { backgroundColor: colors.card }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Account
+          </Text>
 
           <Link href="/settings/edit" asChild>
             <SettingButton
               icon="person-outline"
               title="Edit Profile"
               subtitle="Update team name, members and year level"
+              colors={colors}
             />
           </Link>
 
@@ -140,6 +144,7 @@ export default function SettingsScreen() {
               icon="information-circle-outline"
               title="About STEMM Lab"
               subtitle="Real-world STEMM learning activities"
+              colors={colors}
             />
           </Link>
 
@@ -147,6 +152,7 @@ export default function SettingsScreen() {
             icon="log-out-outline"
             title="Logout"
             subtitle="Sign out of your account"
+            colors={colors}
             onPress={() =>
               Alert.alert("Logout", "Are you sure you want to logout?", [
                 { text: "Cancel", style: "cancel" },
@@ -175,12 +181,12 @@ export default function SettingsScreen() {
             title="Delete Account"
             subtitle="Permanently remove your account and data"
             danger
+            colors={colors}
             onPress={() => setShowDeleteModal(true)}
           />
         </View>
       </ScrollView>
 
-      {/* Delete Account Modal */}
       <Modal
         visible={showDeleteModal}
         transparent
@@ -188,18 +194,20 @@ export default function SettingsScreen() {
         onRequestClose={() => setShowDeleteModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+          <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
             <View style={styles.modalIconCircle}>
               <Ionicons name="warning-outline" size={32} color="#FF4D4F" />
             </View>
 
-            <Text style={styles.modalTitle}>Delete Account</Text>
-            <Text style={styles.modalText}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              Delete Account
+            </Text>
+            <Text style={[styles.modalText, { color: colors.subtext }]}>
               This will permanently delete your account and all your data from
               Firebase. This cannot be undone.
             </Text>
 
-            <Text style={styles.modalLabel}>
+            <Text style={[styles.modalLabel, { color: colors.text }]}>
               Enter your password to confirm
             </Text>
             <TextInput
@@ -208,7 +216,14 @@ export default function SettingsScreen() {
               placeholder="Your password"
               placeholderTextColor="#9A94A6"
               secureTextEntry
-              style={styles.modalInput}
+              style={[
+                styles.modalInput,
+                {
+                  backgroundColor: colors.input,
+                  borderColor: colors.border,
+                  color: colors.text,
+                },
+              ]}
             />
 
             <Pressable
@@ -243,24 +258,26 @@ function SettingToggle({
   subtitle,
   value,
   onValueChange,
+  colors,
 }: {
   icon: any;
   title: string;
   subtitle: string;
   value: boolean;
   onValueChange: (value: boolean) => void;
+  colors: any;
 }) {
   return (
-    <View style={styles.row}>
-      <View style={styles.rowIcon}>
+    <View style={[styles.row, { borderBottomColor: colors.border }]}>
+      <View style={[styles.rowIcon, { backgroundColor: colors.background }]}>
         <Ionicons name={icon} size={22} color="#5B2EEA" />
       </View>
-
       <View style={styles.rowText}>
-        <Text style={styles.rowTitle}>{title}</Text>
-        <Text style={styles.rowSubtitle}>{subtitle}</Text>
+        <Text style={[styles.rowTitle, { color: colors.text }]}>{title}</Text>
+        <Text style={[styles.rowSubtitle, { color: colors.subtext }]}>
+          {subtitle}
+        </Text>
       </View>
-
       <Switch
         value={value}
         onValueChange={onValueChange}
@@ -277,31 +294,43 @@ function SettingButton({
   subtitle,
   onPress,
   danger,
+  colors,
 }: {
   icon: any;
   title: string;
   subtitle: string;
   onPress?: () => void;
   danger?: boolean;
+  colors: any;
 }) {
   return (
-    <Pressable style={styles.row} onPress={onPress}>
-      <View style={[styles.rowIcon, danger && styles.dangerIcon]}>
+    <Pressable
+      style={[styles.row, { borderBottomColor: colors.border }]}
+      onPress={onPress}
+    >
+      <View
+        style={[
+          styles.rowIcon,
+          { backgroundColor: danger ? "#FFEAEA" : colors.background },
+        ]}
+      >
         <Ionicons
           name={icon}
           size={22}
           color={danger ? "#FF4D4F" : "#5B2EEA"}
         />
       </View>
-
       <View style={styles.rowText}>
-        <Text style={[styles.rowTitle, danger && styles.dangerText]}>
+        <Text
+          style={[styles.rowTitle, { color: danger ? "#FF4D4F" : colors.text }]}
+        >
           {title}
         </Text>
-        <Text style={styles.rowSubtitle}>{subtitle}</Text>
+        <Text style={[styles.rowSubtitle, { color: colors.subtext }]}>
+          {subtitle}
+        </Text>
       </View>
-
-      <Ionicons name="chevron-forward" size={20} color="#8C8796" />
+      <Ionicons name="chevron-forward" size={20} color={colors.subtext} />
     </Pressable>
   );
 }
@@ -309,14 +338,12 @@ function SettingButton({
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F7F4FF",
   },
   content: {
     padding: 18,
     paddingBottom: 40,
   },
   card: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     padding: 16,
     marginBottom: 18,
@@ -324,7 +351,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "900",
-    color: "#1D1828",
     marginBottom: 10,
   },
   row: {
@@ -333,18 +359,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#F1EEFA",
   },
   rowIcon: {
     width: 44,
     height: 44,
     borderRadius: 15,
-    backgroundColor: "#EEE9FF",
     alignItems: "center",
     justifyContent: "center",
-  },
-  dangerIcon: {
-    backgroundColor: "#FFEAEA",
   },
   rowText: {
     flex: 1,
@@ -352,15 +373,10 @@ const styles = StyleSheet.create({
   rowTitle: {
     fontSize: 15,
     fontWeight: "800",
-    color: "#1D1828",
   },
   rowSubtitle: {
     fontSize: 12,
-    color: "#7A7288",
     marginTop: 3,
-  },
-  dangerText: {
-    color: "#FF4D4F",
   },
   modalOverlay: {
     flex: 1,
@@ -370,7 +386,6 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   modalCard: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 26,
     padding: 24,
     width: "100%",
@@ -388,18 +403,15 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: "900",
-    color: "#1D1828",
   },
   modalText: {
     fontSize: 14,
-    color: "#6F687D",
     textAlign: "center",
     lineHeight: 20,
   },
   modalLabel: {
     fontSize: 13,
     fontWeight: "800",
-    color: "#1D1828",
     alignSelf: "flex-start",
   },
   modalInput: {
@@ -407,11 +419,8 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#EEEAFD",
-    backgroundColor: "#FBFAFF",
     paddingHorizontal: 14,
     fontSize: 14,
-    color: "#1D1828",
   },
   modalDeleteButton: {
     width: "100%",

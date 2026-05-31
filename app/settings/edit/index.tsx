@@ -13,9 +13,11 @@ import {
   View,
 } from "react-native";
 import { auth, db } from "../../../lib/firebase";
+import { useTheme } from "../../../lib/ThemeContext";
 
 export default function EditProfileScreen() {
   const navigation = useNavigation();
+  const { colors } = useTheme();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -31,12 +33,12 @@ export default function EditProfileScreen() {
     navigation.setOptions({
       headerShown: true,
       title: "Edit Profile",
-      headerStyle: { backgroundColor: "#F7F4FF" },
+      headerStyle: { backgroundColor: colors.background },
       headerShadowVisible: false,
-      headerTintColor: "#1D1828",
+      headerTintColor: colors.text,
       headerTitleStyle: { fontWeight: "800" },
     });
-  }, [navigation]);
+  }, [navigation, colors]);
 
   useEffect(() => {
     loadProfile();
@@ -45,7 +47,6 @@ export default function EditProfileScreen() {
   const loadProfile = async () => {
     try {
       const currentUser = auth.currentUser;
-
       if (!currentUser) {
         setLoading(false);
         return;
@@ -63,13 +64,11 @@ export default function EditProfileScreen() {
       }
 
       const data = userSnap.data();
-
       const savedTeamCode = data.teamCode || "";
       let savedTeamName = data.teamName || "";
 
       if (!savedTeamName && savedTeamCode) {
         const teamSnap = await getDoc(doc(db, "teams", savedTeamCode));
-
         if (teamSnap.exists()) {
           const teamData = teamSnap.data();
           savedTeamName = teamData.teamName || teamData.name || "";
@@ -101,17 +100,13 @@ export default function EditProfileScreen() {
   };
 
   const removeMember = (index: number) => {
-    const updatedMembers = members.filter(
-      (_, memberIndex) => memberIndex !== index,
-    );
-
+    const updatedMembers = members.filter((_, i) => i !== index);
     setMembers(updatedMembers.length ? updatedMembers : [""]);
   };
 
   const handleSave = async () => {
     try {
       setSaving(true);
-
       const currentUser = auth.currentUser;
 
       if (!currentUser) {
@@ -119,9 +114,7 @@ export default function EditProfileScreen() {
         return;
       }
 
-      const cleanMembers = members
-        .map((member) => member.trim())
-        .filter(Boolean);
+      const cleanMembers = members.map((m) => m.trim()).filter(Boolean);
 
       await updateDoc(doc(db, "users", currentUser.uid), {
         firstName: firstName.trim(),
@@ -146,35 +139,46 @@ export default function EditProfileScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingScreen}>
-        <Text style={styles.loadingText}>Loading profile...</Text>
+      <View
+        style={[styles.loadingScreen, { backgroundColor: colors.background }]}
+      >
+        <Text style={[styles.loadingText, { color: colors.text }]}>
+          Loading profile...
+        </Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.card}>
-          <View style={styles.iconWrap}>
+        <View style={[styles.card, { backgroundColor: colors.card }]}>
+          <View
+            style={[styles.iconWrap, { backgroundColor: colors.background }]}
+          >
             <Ionicons name="person-outline" size={34} color="#5B2EEA" />
           </View>
 
-          <Text style={styles.title}>Edit Profile</Text>
+          <Text style={[styles.title, { color: colors.text }]}>
+            Edit Profile
+          </Text>
 
-          <Text style={styles.text}>
+          <Text style={[styles.text, { color: colors.subtext }]}>
             Update your account details, team members and year level.
           </Text>
         </View>
 
-        <View style={styles.formCard}>
-          <Text style={styles.sectionTitle}>Account Details</Text>
+        <View style={[styles.formCard, { backgroundColor: colors.card }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Account Details
+          </Text>
 
           <InputField
             label="First Name"
             value={firstName}
             onChangeText={setFirstName}
             placeholder="Enter first name"
+            colors={colors}
           />
 
           <InputField
@@ -183,17 +187,21 @@ export default function EditProfileScreen() {
             onChangeText={() => {}}
             placeholder="Enter email"
             editable={false}
+            colors={colors}
           />
         </View>
 
-        <View style={styles.formCard}>
-          <Text style={styles.sectionTitle}>Team Details</Text>
+        <View style={[styles.formCard, { backgroundColor: colors.card }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Team Details
+          </Text>
 
           <InputField
             label="Team Name"
             value={teamName}
             onChangeText={setTeamName}
             placeholder="Enter team name"
+            colors={colors}
           />
 
           <InputField
@@ -202,6 +210,7 @@ export default function EditProfileScreen() {
             onChangeText={() => {}}
             placeholder="Team code"
             editable={false}
+            colors={colors}
           />
 
           <InputField
@@ -209,11 +218,14 @@ export default function EditProfileScreen() {
             value={yearLevel}
             onChangeText={setYearLevel}
             placeholder="Enter year level"
+            colors={colors}
           />
         </View>
 
-        <View style={styles.formCard}>
-          <Text style={styles.sectionTitle}>Team Members</Text>
+        <View style={[styles.formCard, { backgroundColor: colors.card }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Team Members
+          </Text>
 
           {members.map((member, index) => (
             <View key={index} style={styles.memberInputRow}>
@@ -223,6 +235,7 @@ export default function EditProfileScreen() {
                   value={member}
                   onChangeText={(value) => updateMember(index, value)}
                   placeholder="Enter member name"
+                  colors={colors}
                 />
               </View>
 
@@ -237,7 +250,13 @@ export default function EditProfileScreen() {
             </View>
           ))}
 
-          <Pressable style={styles.addMemberButton} onPress={addMember}>
+          <Pressable
+            style={[
+              styles.addMemberButton,
+              { backgroundColor: colors.background },
+            ]}
+            onPress={addMember}
+          >
             <Ionicons name="add-circle-outline" size={22} color="#5B2EEA" />
             <Text style={styles.addMemberText}>Add Team Member</Text>
           </Pressable>
@@ -249,7 +268,6 @@ export default function EditProfileScreen() {
           disabled={saving}
         >
           <Ionicons name="checkmark-circle-outline" size={22} color="#FFFFFF" />
-
           <Text style={styles.saveButtonText}>
             {saving ? "Saving..." : "Save Changes"}
           </Text>
@@ -265,23 +283,31 @@ function InputField({
   onChangeText,
   placeholder,
   editable = true,
+  colors,
 }: {
   label: string;
   value: string;
   onChangeText: (value: string) => void;
   placeholder: string;
   editable?: boolean;
+  colors: any;
 }) {
   return (
     <View style={styles.inputGroup}>
-      <Text style={styles.inputLabel}>{label}</Text>
-
+      <Text style={[styles.inputLabel, { color: colors.text }]}>{label}</Text>
       <TextInput
-        style={[styles.input, !editable && styles.disabledInput]}
+        style={[
+          styles.input,
+          {
+            backgroundColor: editable ? colors.input : colors.border,
+            borderColor: colors.border,
+            color: editable ? colors.text : colors.subtext,
+          },
+        ]}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#A39BAD"
+        placeholderTextColor={colors.subtext}
         editable={editable}
       />
     </View>
@@ -289,27 +315,21 @@ function InputField({
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#F7F4FF",
-  },
+  screen: { flex: 1 },
   loadingScreen: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F7F4FF",
   },
   loadingText: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#1D1828",
   },
   content: {
     padding: 18,
     paddingBottom: 40,
   },
   card: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     padding: 22,
     marginBottom: 18,
@@ -318,24 +338,20 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 18,
-    backgroundColor: "#EEE9FF",
     alignItems: "center",
     justifyContent: "center",
   },
   title: {
     fontSize: 24,
     fontWeight: "900",
-    color: "#1D1828",
     marginTop: 14,
   },
   text: {
     fontSize: 14,
-    color: "#7A7288",
     lineHeight: 21,
     marginTop: 8,
   },
   formCard: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     padding: 18,
     marginBottom: 18,
@@ -343,7 +359,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "900",
-    color: "#1D1828",
     marginBottom: 14,
   },
   inputGroup: {
@@ -352,23 +367,15 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 13,
     fontWeight: "800",
-    color: "#1D1828",
     marginBottom: 7,
   },
   input: {
     height: 52,
     borderRadius: 16,
-    backgroundColor: "#F7F4FF",
     paddingHorizontal: 14,
     fontSize: 14,
     fontWeight: "600",
-    color: "#1D1828",
     borderWidth: 1,
-    borderColor: "#E5DDF7",
-  },
-  disabledInput: {
-    backgroundColor: "#ECE8F8",
-    color: "#7A7288",
   },
   memberInputRow: {
     flexDirection: "row",
@@ -387,7 +394,6 @@ const styles = StyleSheet.create({
   addMemberButton: {
     height: 52,
     borderRadius: 16,
-    backgroundColor: "#EEE9FF",
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",

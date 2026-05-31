@@ -23,6 +23,7 @@ import {
 } from "firebase/firestore";
 
 import { auth, db } from "../../../lib/firebase";
+import { useTheme } from "../../../lib/ThemeContext";
 
 type Challenge = {
   id: string;
@@ -44,13 +45,11 @@ type UserData = {
 };
 
 export default function ProfileScreen() {
+  const { colors } = useTheme();
   const [loading, setLoading] = useState(true);
-
   const [userData, setUserData] = useState<UserData | null>(null);
-
   const [challengeCount, setChallengeCount] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
-
   const [recentSubmissions, setRecentSubmissions] = useState<Submission[]>([]);
 
   useEffect(() => {
@@ -62,10 +61,8 @@ export default function ProfileScreen() {
       setLoading(true);
 
       const currentUser = auth.currentUser;
-
       if (!currentUser) return;
 
-      // USER
       const userRef = doc(db, "users", currentUser.uid);
       const userSnap = await getDoc(userRef);
 
@@ -73,7 +70,6 @@ export default function ProfileScreen() {
         setUserData(userSnap.data() as UserData);
       }
 
-      // CHALLENGES
       const challengeSnapshot = await getDocs(
         query(collection(db, "challenges"), orderBy("id", "asc")),
       );
@@ -93,7 +89,6 @@ export default function ProfileScreen() {
       setChallengeCount(challenges.length);
       setCompletedCount(completed);
 
-      // SUBMISSIONS
       const submissionsSnapshot = await getDocs(
         query(
           collection(db, "submissions"),
@@ -121,13 +116,11 @@ export default function ProfileScreen() {
 
   const progress = useMemo(() => {
     if (challengeCount === 0) return 0;
-
     return Math.round((completedCount / challengeCount) * 100);
   }, [challengeCount, completedCount]);
 
   const initials = useMemo(() => {
     if (!userData?.teamName) return "ST";
-
     return userData.teamName
       .split(" ")
       .map((word) => word[0])
@@ -137,18 +130,21 @@ export default function ProfileScreen() {
   }, [userData]);
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.header}>
+    <SafeAreaView
+      style={[styles.screen, { backgroundColor: colors.background }]}
+    >
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
         <View>
-          <Text style={styles.title}>Profile</Text>
-
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.text }]}>Profile</Text>
+          <Text style={[styles.subtitle, { color: colors.subtext }]}>
             View your team details, members and recent STEMM activity.
           </Text>
         </View>
 
         <Link href="/settings" asChild>
-          <Pressable style={styles.settingsButton}>
+          <Pressable
+            style={[styles.settingsButton, { backgroundColor: colors.card }]}
+          >
             <Ionicons name="settings-outline" size={24} color="#5B2EEA" />
           </Pressable>
         </Link>
@@ -156,9 +152,11 @@ export default function ProfileScreen() {
 
       <ScrollView contentContainerStyle={styles.content}>
         {loading ? (
-          <View style={styles.loadingBox}>
+          <View style={[styles.loadingBox, { backgroundColor: colors.card }]}>
             <ActivityIndicator color="#5B2EEA" />
-            <Text style={styles.loadingText}>Loading profile...</Text>
+            <Text style={[styles.loadingText, { color: colors.subtext }]}>
+              Loading profile...
+            </Text>
           </View>
         ) : (
           <>
@@ -166,53 +164,74 @@ export default function ProfileScreen() {
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>{initials}</Text>
               </View>
-
               <Text style={styles.teamName}>
                 {userData?.teamName || "No Team"}
               </Text>
-
               <Text style={styles.teamCode}>
                 Team Code: {userData?.teamCode || "N/A"}
               </Text>
-
               <Text style={styles.grade}>
                 {userData?.yearLevel || "No year level"}
               </Text>
             </View>
 
             <View style={styles.statsRow}>
-              <View style={styles.statCard}>
-                <Text style={styles.statValue}>{challengeCount}</Text>
-                <Text style={styles.statLabel}>Challenges</Text>
+              <View style={[styles.statCard, { backgroundColor: colors.card }]}>
+                <Text style={[styles.statValue, { color: colors.text }]}>
+                  {challengeCount}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.subtext }]}>
+                  Challenges
+                </Text>
               </View>
 
-              <View style={styles.statCard}>
-                <Text style={styles.statValue}>{completedCount}</Text>
-                <Text style={styles.statLabel}>Completed</Text>
+              <View style={[styles.statCard, { backgroundColor: colors.card }]}>
+                <Text style={[styles.statValue, { color: colors.text }]}>
+                  {completedCount}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.subtext }]}>
+                  Completed
+                </Text>
               </View>
 
-              <View style={styles.statCard}>
-                <Text style={styles.statValue}>{progress}%</Text>
-                <Text style={styles.statLabel}>Progress</Text>
+              <View style={[styles.statCard, { backgroundColor: colors.card }]}>
+                <Text style={[styles.statValue, { color: colors.text }]}>
+                  {progress}%
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.subtext }]}>
+                  Progress
+                </Text>
               </View>
             </View>
 
-            <Text style={styles.sectionTitle}>Team Members</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Team Members
+            </Text>
 
-            <View style={styles.card}>
+            <View style={[styles.card, { backgroundColor: colors.card }]}>
               {(userData?.members || []).length === 0 ? (
-                <Text style={styles.emptyText}>No team members found.</Text>
+                <Text style={[styles.emptyText, { color: colors.subtext }]}>
+                  No team members found.
+                </Text>
               ) : (
                 userData?.members?.map((member, index) => (
                   <View key={member} style={styles.memberRow}>
-                    <View style={styles.memberIcon}>
+                    <View
+                      style={[
+                        styles.memberIcon,
+                        { backgroundColor: colors.background },
+                      ]}
+                    >
                       <Ionicons name="person" size={22} color="#5B2EEA" />
                     </View>
 
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.memberName}>{member}</Text>
-
-                      <Text style={styles.memberRole}>
+                      <Text style={[styles.memberName, { color: colors.text }]}>
+                        {member}
+                      </Text>
+                      <Text
+                        style={[styles.memberRole, { color: colors.subtext }]}
+                      >
                         {index === 0 ? "Team Lead" : "Team Member"}
                       </Text>
                     </View>
@@ -227,11 +246,15 @@ export default function ProfileScreen() {
               )}
             </View>
 
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Recent Activity
+            </Text>
 
-            <View style={styles.card}>
+            <View style={[styles.card, { backgroundColor: colors.card }]}>
               {recentSubmissions.length === 0 ? (
-                <Text style={styles.emptyText}>No recent activity yet.</Text>
+                <Text style={[styles.emptyText, { color: colors.subtext }]}>
+                  No recent activity yet.
+                </Text>
               ) : (
                 recentSubmissions.map((submission) => (
                   <View key={submission.id} style={styles.activityRow}>
@@ -240,13 +263,15 @@ export default function ProfileScreen() {
                       size={24}
                       color="#5B2EEA"
                     />
-
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.activityTitle}>
+                      <Text
+                        style={[styles.activityTitle, { color: colors.text }]}
+                      >
                         {submission.challengeTitle || "Challenge submitted"}
                       </Text>
-
-                      <Text style={styles.activityText}>
+                      <Text
+                        style={[styles.activityText, { color: colors.subtext }]}
+                      >
                         {submission.observations ||
                           "Submission completed successfully."}
                       </Text>
@@ -263,66 +288,49 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#F7F4FF",
-  },
-
+  screen: { flex: 1 },
   header: {
     paddingHorizontal: 18,
     paddingTop: 10,
     paddingBottom: 14,
-    backgroundColor: "#F7F4FF",
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 14,
   },
-
   title: {
     fontSize: 32,
     fontWeight: "900",
-    color: "#1D1828",
     letterSpacing: -0.8,
   },
-
   subtitle: {
     marginTop: 5,
     fontSize: 14,
     fontWeight: "600",
-    color: "#7A7288",
     lineHeight: 21,
     maxWidth: 280,
   },
-
   settingsButton: {
     width: 46,
     height: 46,
     borderRadius: 16,
-    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
   },
-
   content: {
     paddingHorizontal: 18,
     paddingBottom: 30,
   },
-
   loadingBox: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 24,
     alignItems: "center",
     gap: 10,
   },
-
   loadingText: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#7A7288",
   },
-
   headerCard: {
     backgroundColor: "#5B2EEA",
     borderRadius: 28,
@@ -330,7 +338,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 18,
   },
-
   avatar: {
     width: 82,
     height: 82,
@@ -340,122 +347,93 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 14,
   },
-
   avatarText: {
     fontSize: 26,
     fontWeight: "900",
     color: "#5B2EEA",
   },
-
   teamName: {
     fontSize: 25,
     fontWeight: "900",
     color: "#FFFFFF",
   },
-
   teamCode: {
     fontSize: 14,
     color: "#EEE8FF",
     fontWeight: "700",
     marginTop: 6,
   },
-
   grade: {
     fontSize: 13,
     color: "#EEE8FF",
     marginTop: 4,
   },
-
   statsRow: {
     flexDirection: "row",
     gap: 12,
     marginBottom: 22,
   },
-
   statCard: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     paddingVertical: 18,
     alignItems: "center",
   },
-
   statValue: {
     fontSize: 22,
     fontWeight: "900",
-    color: "#1D1828",
   },
-
   statLabel: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#7A7288",
     marginTop: 4,
   },
-
   sectionTitle: {
     fontSize: 19,
     fontWeight: "900",
-    color: "#1D1828",
     marginBottom: 12,
   },
-
   card: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     padding: 16,
     marginBottom: 22,
     gap: 14,
   },
-
   memberRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
   },
-
   memberIcon: {
     width: 46,
     height: 46,
     borderRadius: 16,
-    backgroundColor: "#EEE9FF",
     alignItems: "center",
     justifyContent: "center",
   },
-
   memberName: {
     fontSize: 15,
     fontWeight: "800",
-    color: "#1D1828",
   },
-
   memberRole: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#7A7288",
     marginTop: 3,
   },
-
   activityRow: {
     flexDirection: "row",
     gap: 12,
   },
-
   activityTitle: {
     fontSize: 15,
     fontWeight: "800",
-    color: "#1D1828",
   },
-
   activityText: {
     fontSize: 13,
-    color: "#7A7288",
     marginTop: 3,
   },
-
   emptyText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#7A7288",
   },
 });
