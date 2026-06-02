@@ -12,6 +12,7 @@
       "bundleIdentifier": "com.yacqubs.campusmate"
     },
     "android": {
+      "package": "com.apoorva.campusmate",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

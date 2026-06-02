@@ -1,5 +1,12 @@
+import React, { useState } from "react";
+
 import { router } from "expo-router";
-import React from "react";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+
+import { doc, setDoc } from "firebase/firestore";
+
+import { auth, db } from "../../firebaseConfig";
+
 import {
   Alert,
   Pressable,
@@ -10,30 +17,70 @@ import {
 } from "react-native";
 
 export default function RegisterScreen() {
-  const handleRegister = () => {
-    Alert.alert("Register", "Firebase registration will be connected here.");
-    router.replace("/home");
+  const [firstName, setFirstName] = useState("");
+
+  const [email, setEmail] = useState("");
+
+  const [password, setPassword] = useState("");
+
+  const handleRegister = async () => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
+
+      const user = userCredential.user;
+
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+
+        email: user.email,
+
+        firstName: firstName,
+
+        teamId: "",
+
+        role: "student",
+
+        createdAt: new Date(),
+      });
+
+      Alert.alert("Success", "Account created!");
+
+      router.replace("/home");
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
+    }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Create Account</Text>
 
-      <TextInput style={styles.input} placeholder="Full Name" />
-
       <TextInput
         style={styles.input}
         placeholder="Email"
         keyboardType="email-address"
         autoCapitalize="none"
+        value={email}
+        onChangeText={setEmail}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Full Name"
+        value={firstName}
+        onChangeText={setFirstName}
       />
 
       <TextInput
         style={styles.input}
         placeholder="Password"
         secureTextEntry
+        value={password}
+        onChangeText={setPassword}
       />
-
       <Pressable style={styles.button} onPress={handleRegister}>
         <Text style={styles.buttonText}>Register</Text>
       </Pressable>
