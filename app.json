@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "stemmlab",
-    "slug": "stemmlab",
+    "name": "campusmate",
+    "slug": "campusmate",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "stemmlab",
+    "scheme": "campusmate",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.yacqubs.stemmlab"
+      "bundleIdentifier": "com.yacqubs.campusmate"
     },
     "android": {
       "adaptiveIcon": {
@@ -18,8 +18,7 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false,
-      "package": "com.yacqubs.stemmlab"
+      "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
@@ -37,26 +36,11 @@
           }
         }
       ],
-      "expo-sqlite",
-      "expo-font",
-      "expo-web-browser",
-      [
-        "react-native-google-mobile-ads",
-        {
-          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
-          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
-        }
-      ]
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    },
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "a6b32390-ce80-4e48-9207-45a8902328a4"
-      }
     }
   }
 }

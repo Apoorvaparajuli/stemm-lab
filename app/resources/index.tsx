@@ -1,13 +1,13 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-export default function SafetyScreen() {
+export default function ResourcesScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Safety</Text>
+      <Text style={styles.title}>Learning Resources</Text>
       <Text style={styles.text}>
-        This screen can include emergency guidance, sensor-based alerts, and
-        safety notifications.
+        This screen will store STEM notes, formulas, videos, and reference
+        materials.
       </Text>
     </View>
   );

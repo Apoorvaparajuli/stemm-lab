@@ -1,232 +1,87 @@
-import { Ionicons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    Alert,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 
-import { auth } from "../../lib/firebase";
-
-const getLoginErrorMessage = (code?: string) => {
-  if (code === "auth/invalid-email") {
-    return "Enter a valid email address.";
-  }
-  if (
-    code === "auth/user-not-found" ||
-    code === "auth/wrong-password" ||
-    code === "auth/invalid-credential"
-  ) {
-    return "Incorrect email or password.";
-  }
-  if (code === "auth/network-request-failed") {
-    return "Network error. Check your internet and try again.";
-  }
-  return "Login failed. Please try again.";
-};
-
 export default function LoginScreen() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleLogin = async () => {
-    if (loading) return;
-    setEmailError("");
-    setPasswordError("");
-    const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail) {
-      setEmailError("Email is required.");
-      return;
-    }
-    if (!password) {
-      setPasswordError("Password is required.");
-      return;
-    }
-    try {
-      setLoading(true);
-      await signInWithEmailAndPassword(auth, cleanEmail, password);
-      router.replace("/home");
-    } catch (error: any) {
-      console.log("Login error:", error);
-      const message = getLoginErrorMessage(error?.code);
-      if (error?.code === "auth/invalid-email") {
-        setEmailError(message);
-        return;
-      }
-      setPasswordError(message);
-    } finally {
-      setLoading(false);
-    }
+  const handleLogin = () => {
+    Alert.alert("Login", "Firebase login will be connected here.");
+    router.replace("/home");
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.keyboardAvoid}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <ScrollView
-        contentContainerStyle={styles.screen}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.logo}>
-          <Ionicons name="flask" size={42} color="#FFFFFF" />
-        </View>
+    <View style={styles.container}>
+      <Text style={styles.title}>STEM Learning App</Text>
+      <Text style={styles.subtitle}>Login to continue</Text>
 
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>
-          Log in to continue your STEMM Lab activities.
-        </Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
 
-        <View style={styles.card}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={[styles.input, !!emailError && styles.inputError]}
-            placeholder="Enter email"
-            placeholderTextColor="#A39BAD"
-            value={email}
-            onChangeText={(value) => {
-              setEmail(value);
-              setEmailError("");
-            }}
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="email-address"
-          />
-          {!!emailError && <Text style={styles.errorText}>{emailError}</Text>}
+      <TextInput style={styles.input} placeholder="Password" secureTextEntry />
 
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={[styles.input, !!passwordError && styles.inputError]}
-            placeholder="Enter password"
-            placeholderTextColor="#A39BAD"
-            value={password}
-            onChangeText={(value) => {
-              setPassword(value);
-              setPasswordError("");
-            }}
-            secureTextEntry
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          {!!passwordError && (
-            <Text style={styles.errorText}>{passwordError}</Text>
-          )}
+      <Pressable style={styles.button} onPress={handleLogin}>
+        <Text style={styles.buttonText}>Login</Text>
+      </Pressable>
 
-          <Pressable
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            <Text style={styles.buttonText}>
-              {loading ? "Logging in..." : "Login"}
-            </Text>
-          </Pressable>
-
-          <Link href="/register" style={styles.link}>
-            Don&apos;t have an account? Register
-          </Link>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <Link href="/register" style={styles.link}>
+        Create new account
+      </Link>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  keyboardAvoid: {
+  container: {
     flex: 1,
-    backgroundColor: "#F7F4FF",
-  },
-  screen: {
-    flexGrow: 1,
-    padding: 22,
+    padding: 24,
     justifyContent: "center",
-  },
-  logo: {
-    width: 86,
-    height: 86,
-    borderRadius: 28,
-    backgroundColor: "#5B2EEA",
-    alignItems: "center",
-    justifyContent: "center",
-    alignSelf: "center",
-    marginBottom: 22,
+    backgroundColor: "#F8FAFC",
   },
   title: {
-    fontSize: 32,
-    fontWeight: "900",
-    color: "#1D1828",
+    fontSize: 30,
+    fontWeight: "800",
+    color: "#111827",
     textAlign: "center",
   },
   subtitle: {
-    fontSize: 14,
-    color: "#7A7288",
+    fontSize: 16,
+    color: "#64748B",
     textAlign: "center",
-    marginTop: 8,
-    marginBottom: 24,
-  },
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 26,
-    padding: 20,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: "#1D1828",
-    marginBottom: 8,
-    marginTop: 12,
+    marginBottom: 32,
   },
   input: {
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: "#F7F4FF",
-    paddingHorizontal: 14,
-    fontSize: 14,
-    color: "#1D1828",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E5DDF7",
-  },
-  inputError: {
-    borderColor: "#FF4D4F",
-    backgroundColor: "#FFF7F7",
-  },
-  errorText: {
-    color: "#FF4D4F",
-    fontSize: 12,
-    fontWeight: "700",
-    marginTop: 6,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 14,
   },
   button: {
-    height: 54,
-    borderRadius: 18,
-    backgroundColor: "#5B2EEA",
+    backgroundColor: "#2563EB",
+    padding: 16,
+    borderRadius: 12,
     alignItems: "center",
-    justifyContent: "center",
-    marginTop: 22,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
+    marginTop: 8,
   },
   buttonText: {
     color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "900",
+    fontWeight: "700",
+    fontSize: 16,
   },
   link: {
-    color: "#5B2EEA",
-    fontWeight: "800",
+    marginTop: 20,
+    color: "#2563EB",
     textAlign: "center",
-    marginTop: 18,
+    fontWeight: "600",
   },
 });
