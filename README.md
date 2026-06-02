@@ -4,6 +4,14 @@ STEMM Lab is a mobile application designed for students to participate in collab
 
 This project was developed using Expo and React Native as part of a Mobile Application Development assessment project.
 
+GitHub Repository: https://github.com/Apoorvaparajuli/stemm-lab
+EAS Android Build: https://expo.dev/accounts/yacqubs/projects/stemmlab/builds/bc6dd92b-6613-47bf-8d07-832de40c51a1
+
+Development Team:
+
+- Yacqub Ali (yacqubstack)
+- Apoorva Parajuli (Apoorvaparajuli)
+
 ---
 
 # Features
@@ -72,35 +80,52 @@ This project was developed using Expo and React Native as part of a Mobile Appli
 ```txt
 app/
   _layout.tsx
-  index.tsx
-
+  (tabs)/
+    _layout.tsx
+    home/
+      index.tsx
+    tasks/
+      index.tsx
+      add/
+        index.tsx
+      [id]/
+        index.tsx
+      submissions/
+        index.tsx
+    map/
+      index.tsx
+    resources/
+      index.tsx
+    profile/
+      index.tsx
+  settings/
+    index.tsx
+    edit/
+      index.tsx
+    stemm-lab/
+      index.tsx
+  welcome/
+    index.tsx
   login/
     index.tsx
-
   register/
     index.tsx
-
-  home/
-    index.tsx
-
-  tasks/
-    index.tsx
-    add/
-      index.tsx
-    [id]/
-      index.tsx
-
-  map/
-    index.tsx
-
   safety/
     index.tsx
 
-  resources/
-    index.tsx
+lib/
+  firebase.ts
+  ThemeContext.tsx
+  seedChallenges.ts
 
-  profile/
-    index.tsx
+__tests__/
+  unit.test.ts
+  filter.test.ts
+  submission.test.ts
+
+eas.json
+app.json
+package.json
 ```
 
 Note:
